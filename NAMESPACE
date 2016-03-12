@@ -1,5 +1,6 @@
 import(caret)
 import(methods)
+import(pycno)
 
 importFrom(sp, coordinates)
 
