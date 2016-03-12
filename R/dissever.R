@@ -77,7 +77,7 @@ utils::globalVariables(c(
 
 # Computes the regression model between some coarse data and
 # the stack of covariates
-.update_model <- function(x, y, method = 'rf', control, tune_grid){
+.update_model <- function(x, y, method = 'rf', control, tune_grid, data_type){
   # Picks the parameters of the model using RMSE on the first run
   # Then use the optimised parameters in the iteration loop to save
   # on computing time
@@ -279,7 +279,8 @@ utils::globalVariables(c(
     y = fine_df[id_spl, nm_coarse, drop = TRUE],
     method = method,
     control = train_control_init,
-    tune_grid = tune_grid
+    tune_grid = tune_grid,
+    data_type = data_type
   )
 
   # Getting best setof params
@@ -341,7 +342,8 @@ utils::globalVariables(c(
       y = diss_result[id_spl, 'diss', drop = TRUE],
       method = method,
       control = train_control_iter,
-      tune_grid = best_params
+      tune_grid = best_params,
+      data_type = data_type
     )
 
     if (verbose) message('| -- updating predictions')
@@ -355,7 +357,7 @@ utils::globalVariables(c(
     summary_metric <- function( data, type ) {
       if (type == 'count') { return( sum(data) ) }
       if (type == 'categorical') { return( median(data) ) }
-      return return( mean(data) )
+      return( mean(data) )
     }
     diss_coarse <- diss_result %>%
       group_by(cell) %>%
