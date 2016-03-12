@@ -497,6 +497,7 @@ if(!isGeneric("dissever")) {
 #' @param level If this is a numeric value, it is used to derive confidence intervals using quantiles. If it is a function, it is used to derive the uncertainty using this function.
 #' @param tune_length numeric, the number of parameters to test to find the optimal parametrisation of the caret model (defaults to 3)
 #' @param tune_grid a data frame with possible tuning values
+#' @param data_type a string indicating the type of data to be downscaled/disaggregated. Can be 'real', 'count' or 'categorical' (defaults to 'real')
 #' @param train_control_init Control parameters for finding the optimal parameters of the caret model (see trainControl)
 #' @param train_control_iter Control parameters for fitting the caret model during the iteration phase (see trainControl)
 #' @param verbose controls the verbosity of the output (TRUE or FALSE)
