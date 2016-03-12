@@ -105,6 +105,7 @@ utils::globalVariables(c(
 #     fit <- caretEnsemble(model_list)
 #
 #   } else {
+    if ( data_type == 'categorical' ) { y = as.factor(y) }
     fit <- train(
       x = x,
       y = y, # in this case train needs a vector
