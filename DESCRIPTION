@@ -5,8 +5,8 @@ Version: 0.1-0
 Date: 2013-03-01
 Authors@R: c(
     person("Brendan", "Malone", email = "brendan.malone@sydney.edu.au", role = "cre"),
-    person("Roudier", "Pierre", email = "roudierp@landcareresearch.co.nz", role = "aut"))
-    person("Martins", "Bruno", email = "bruno.g.martins@ist.utl.pt", role = "aut"))
+    person("Roudier", "Pierre", email = "roudierp@landcareresearch.co.nz", role = "aut"),
+    person("Martins", "Bruno", email = "bruno.g.martins@ist.utl.pt", role = "aut"),
     person("Monteiro", "João", email = "joao.miguel.monteiro@ist.utl.pt", role = "aut"))
 Description: Performs spatial downscaling (or spatial disaggregation of count data) of coarse grid mapping to fine grid mapping using predictive covariates and a model fitted using the caret package.
 URL: https://github.com/bgmartins/dissever
