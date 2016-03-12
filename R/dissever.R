@@ -220,6 +220,7 @@ utils::globalVariables(c(
     tune_grid = .create_tune_grid(model = method, tune_length = tune_length),
     train_control_init = .default_control_init,
     train_control_iter = .default_control_iter,
+    data_type = "real",
     verbose = FALSE
   ){
 
@@ -228,6 +229,11 @@ utils::globalVariables(c(
     stop('Resolution of fine data should be higer than resolution of coarse data')
   }
 
+  # Stop if resolution of covariates is not higher than resolution of coarse data
+  if (not(data_type == "real" || data_type=="count" || data_type=="categorical")) {
+    stop('Data type should be real, categorical or count')
+  }
+  
   # Store names of coarse data and fine-scale covariates
   nm_coarse <- names(coarse)
   nm_covariates <- names(fine)
@@ -344,9 +350,14 @@ utils::globalVariables(c(
     # if (verbose) message('| -- averaging prediction on coarse grid')
 
     # Aggregate average prediction on coarse grid
+    summary_metric <- function( data, type ) {
+      if (type == 'count') { return( sum(data) ) }
+      if (type == 'categorical') { return( median(data) ) }
+      return return( mean(data) )
+    }
     diss_coarse <- diss_result %>%
       group_by(cell) %>%
-      summarise(diss = mean(diss)) %>%
+      summarise(diss = summary_metric(diss,data_type)) %>%
       inner_join(coarse_df, ., by = "cell")
 
     # if (verbose) message('| -- computing performance stats')
@@ -490,7 +501,7 @@ if(!isGeneric("dissever")) {
 #' @param train_control_iter Control parameters for fitting the caret model during the iteration phase (see trainControl)
 #' @param verbose controls the verbosity of the output (TRUE or FALSE)
 #' @docType methods
-#' @author Brendan Malone, Pierre Roudier
+#' @author Brendan Malone, Pierre Roudier, Bruno Martins, João Cordeiro
 #' @references Malone, B.P, McBratney, A.B., Minasny, B., Wheeler, I., (2011) A general method for downscaling earth resource information. Computers & Geosciences, 41: 119-125. \url{http://dx.doi.org/10.1016/j.cageo.2011.08.021}
 #' @examples
 #' # Load the Edgeroi dataset (see ?edgeroi)
