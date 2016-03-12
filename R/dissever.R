@@ -263,7 +263,7 @@ utils::globalVariables(c(
   # Sub-sample for modelling
   n_spl <- ceiling(nrow(fine_df) * p) # Number of cells to sample
 
-  if (!is.null(nmax) & nmax > 0) {
+  if (!is.null(nmax) && nmax > 0) {
     n_spl <- min(n_spl, nmax)
   }
 
