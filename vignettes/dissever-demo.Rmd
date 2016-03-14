@@ -22,7 +22,6 @@ Here is the coarse model to dissever:
 ```{r plot_coarse, fig.width=6, fig.height=6}
 plot(edgeroi$carbon, col = viridis(100))
 ```
-
 and here are the covariates that will be used for the disseveration:
 
 ```{r plot_fine, fig.width=8, fig.height=6}
@@ -94,6 +93,7 @@ res_lm <- dissever(
 m <- cellStats(edgeroi$carbon, stat=fivenum) 
 m <- matrix( c( m[1], m[2], 1, m[2], m[3], 2, m[3], m[4], 3, m[4], m[5], 4) , ncol=3, byrow=TRUE)                
 edgeroi$categorical <- reclassify(edgeroi$carbon,m)
+# plot( edgeroi$categorical , col = viridis(4) , interpolate=FALSE )
 res_rf_cat <- dissever(
     coarse = edgeroi$categorical, # coarse resolution raster
     fine = edgeroi$predictors, # stack of fine resolution covariates
@@ -125,6 +125,7 @@ plot(res_rf, type = 'map', main = "Random Forest")
 plot(res_cubist, type = 'map', main = "Cubist")
 plot(res_gam, type = 'map', main = "GAM")
 plot(res_lm, type = 'map', main = "Linear Model")
+plot(res_rf_cat, type = 'map', main = "Random Forest - Categorical Data")
 ```
 
 ## Convergence
