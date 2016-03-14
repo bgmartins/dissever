@@ -78,7 +78,7 @@ utils::globalVariables(c(
 # Computes the regression model between some coarse data and
 # the stack of covariates
 .update_model <- function(x, y, method = 'rf', control, tune_grid, data_type){
-  # Picks the parameters of the model using RMSE on the first run
+  # Picks the parameters of the model using error on the first run
   # Then use the optimised parameters in the iteration loop to save
   # on computing time
   # Basically we just need to change the trainControl object to do that
@@ -106,7 +106,7 @@ utils::globalVariables(c(
 #
 #   } else {
     y_aux = y
-    if ( data_type == 'categorical' ) { y_aux = as.factor(y_aux) }
+    if ( data_type == 'categorical' ) { y_aux = factor( y_aux ) }
     fit <- train(
       x = x,
       y = y_aux, # in this case train needs a vector
@@ -204,8 +204,7 @@ utils::globalVariables(c(
       res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot)
     }
   }
-
-  res
+  as.numeric( res )
 }
 
 .dissever <- function(
@@ -222,7 +221,7 @@ utils::globalVariables(c(
     tune_grid = .create_tune_grid(model = method, tune_length = tune_length),
     train_control_init = .default_control_init,
     train_control_iter = .default_control_iter,
-    data_type = "real",
+    data_type = "numeric",
     verbose = FALSE
   ){
 
@@ -232,8 +231,8 @@ utils::globalVariables(c(
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
-  if (not(data_type == "real" || data_type=="count" || data_type=="categorical")) {
-    stop('Data type should be real, categorical or count')
+  if (not(data_type == "numeric" || data_type=="count" || data_type=="categorical")) {
+    stop('Data type should be numeric, categorical or count')
   }
   
   # Store names of coarse data and fine-scale covariates
@@ -294,7 +293,7 @@ utils::globalVariables(c(
   }
 
   # Initiate matrix to store performance of disseveration
-  perf <- matrix(ncol = 3, nrow = 0, dimnames = list(NULL,c("lower_rmse", "rmse", "upper_rmse")))
+  perf <- matrix(ncol = 3, nrow = 0, dimnames = list(NULL,c("lower_error", "error", "upper_error")))
 
   # Initiate dissever result data.frame
   diss_result <- fine_df[, c('x', 'y', 'cell', nm_coarse)]
@@ -366,11 +365,11 @@ utils::globalVariables(c(
 
     # if (verbose) message('| -- computing performance stats')
 
-    # RMSE
+    # compute error
     n <- nrow(diss_coarse)
     sqe <- (diss_coarse[[nm_coarse]] - diss_coarse[['diss']])^2
     mse <- mean(sqe)
-    rmse <- sqrt(mse) # RMSE
+    error <- sqrt(mse) # RMSE
 
     # Confidence intervals
     # In this case we use 5% C.I.
@@ -378,18 +377,26 @@ utils::globalVariables(c(
     var <- ((1)^2/(n * (n - 1))) * sum(sqe) # Variance
     se <- sqrt(var) # Standard error
     ci <- se * t_student
-    upper_ci <- mse + ci
-    lower_ci <- max(0, mse - ci)
+    upper_ci <- sqrt(mse + ci)
+    lower_ci <- sqrt(max(0, mse - ci))
+
+    if (data_type == 'categorical' ) {
+      error <- (diss_coarse[[nm_coarse]] == diss_coarse[['diss']])
+      error <- 1.0 - ( sum(error) / as.numeric(n) )
+      # TODO : compute confidence estimates for the classification error
+      upper_ci = error
+      lower_ci = error
+    }
 
     # Fill result matrix
-    perf <- rbind(perf, c(sqrt(lower_ci), rmse, sqrt(upper_ci)))
+    perf <- rbind(perf, c(lower_ci, error, upper_ci))
 
-    if (verbose) message("| -- RMSE = ", round(rmse, 3))
+    if (verbose) message("| -- ERROR = ", round(error, 3))
 
     # Choose whether we retain the model or not
-    if (rmse < best_fit){
+    if (error < best_fit){
       best_model <- fit
-      best_fit <- rmse
+      best_fit <- error
       best_iteration <- k
     }
 
@@ -399,8 +406,8 @@ utils::globalVariables(c(
       # Computing stop criterion
       stop_criterion <- mean(
         (perf[k - 2, 2] - perf[k - 1, 2]) + # improvement at last iteration
-          (perf[k - 1, 2] - rmse) + # improvement at this iteration
-          (perf[k - 2, 2] - rmse) # improvement over last 2 iterations
+          (perf[k - 1, 2] - error) + # improvement at this iteration
+          (perf[k - 2, 2] - error) # improvement over last 2 iterations
       )
 
       # If we have reach some kind of pseudo-optimium,
@@ -436,7 +443,7 @@ utils::globalVariables(c(
 #' @title Plots a dissever result
 #' @description Plots a dissever result. Two modes are possible to visualise either the resulting map or the convergence of the disseveration.
 #' @param x object of class \code{dissever}, output from the \code{dissever} function
-#' @param type character, type of visualisation to produce. Options are "map", to produce a map of the dissevered coarse map, or "perf", to show the convergence of the RMSE during the disseveration procedure.
+#' @param type character, type of visualisation to produce. Options are "map", to produce a map of the dissevered coarse map, or "perf", to show the convergence of the error during the disseveration procedure.
 #' @param ... Additional arguments passed to plot
 #' @author Pierre Roudier
 #' @examples
@@ -450,12 +457,12 @@ plot.dissever <- function(x, type = 'map', ...) {
   } else {
     # Get number of iterations
     n_iter <- nrow(x$perf)
-    plot(1:n_iter, x$perf$rmse, type = 'l', xlab = 'Iteration', ylab = 'RMSE', ylim = range(x$perf), ...)
-    lines(1:n_iter, x$perf$upper_rmse, lty = 3)
-    lines(1:n_iter, x$perf$lower_rmse, lty = 3)
+    plot(1:n_iter, x$perf$error, type = 'l', xlab = 'Iteration', ylab = 'Error', ylim = range(x$perf), ...)
+    lines(1:n_iter, x$perf$upper_error, lty = 3)
+    lines(1:n_iter, x$perf$lower_error, lty = 3)
     # Get selected model
-    best <- which.min(x$perf$rmse)
-    points(best, x$perf[best, 'rmse'], pch = 16, col = 2)
+    best <- which.min(x$perf$error)
+    points(best, x$perf[best, 'error'], pch = 16, col = 2)
   }
 }
 
@@ -494,7 +501,7 @@ if(!isGeneric("dissever")) {
 #' @param method a string specifying which classification or regression model to use (via the caret package). Possible values are found using names(caret::getModelInfo()).
 #' @param p numeric, proportion of the fine map that is sampled for fitting the dissever model (between 0 and 1, defaults to 0.5)
 #' @param nmax numeric maximum number of pixels selected for fitting the dissever model. It will override the number of pixels chosen by the \code{p} option if that number is over the value passed to \code{nmax}.
-#' @param thresh numeric, dissever iterations will proceed until the RMSE of the dissever model reaches this value, or until the maximum number of iterations is met (defaults to 0.01)
+#' @param thresh numeric, dissever iterations will proceed until the error of the dissever model reaches this value, or until the maximum number of iterations is met (defaults to 0.01)
 #' @param min_iter numeric, minimum number of iterations (defaults to 5)
 #' @param max_iter numeric, maximum number of iterations (defaults to 20)
 #' @param boot numeric, if not NULL (default), the number of bootstrap replicates used to derive the confidence intervals.
@@ -503,7 +510,7 @@ if(!isGeneric("dissever")) {
 #' @param tune_grid a data frame with possible tuning values
 #' @param train_control_init Control parameters for finding the optimal parameters of the caret model (see trainControl)
 #' @param train_control_iter Control parameters for fitting the caret model during the iteration phase (see trainControl)
-#' @param data_type a string indicating the type of data to be downscaled/disaggregated. Can be 'real', 'count' or 'categorical' (defaults to 'real')
+#' @param data_type a string indicating the type of data to be downscaled/disaggregated. Can be 'numeric', 'count' or 'categorical' (defaults to 'numeric')
 #' @param verbose controls the verbosity of the output (TRUE or FALSE)
 #' @docType methods
 #' @author Brendan Malone, Pierre Roudier, Bruno Martins, João Cordeiro
