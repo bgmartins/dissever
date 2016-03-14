@@ -83,6 +83,9 @@ utils::globalVariables(c(
   # on computing time
   # Basically we just need to change the trainControl object to do that
 
+    y_aux = y
+    if ( data_type == 'categorical' ) { y_aux = factor( y_aux ) }
+
   # *** Ensemble modelling ***
 #   if (length(method > 1)) {
 #     require(caretEnsemble)
@@ -97,7 +100,7 @@ utils::globalVariables(c(
 #     # create CaretList
 #     model_list <- caretList(
 #       x = x,
-#       y = y,
+#       y = y_aux,
 #       trControl = control,
 #       tuneList = models
 #     )
@@ -105,8 +108,6 @@ utils::globalVariables(c(
 #     fit <- caretEnsemble(model_list)
 #
 #   } else {
-    y_aux = y
-    if ( data_type == 'categorical' ) { y_aux = factor( y_aux ) }
     fit <- train(
       x = x,
       y = y_aux, # in this case train needs a vector
@@ -125,7 +126,7 @@ utils::globalVariables(c(
 
 # Generates prediction intervals using bootstraping
 #
-.bootstrap_ci <- function(fit, fine_df, level = 0.9, n = 50L) {
+.bootstrap_ci <- function(fit, fine_df, level = 0.9, n = 50L, data_type="numeric" ) {
 
   # training data
   df <- fit$trainingData
@@ -138,6 +139,10 @@ utils::globalVariables(c(
 
     bootstrap_df <- data[idx, ]
 
+#    if ( data_type == "categorical" ) { bootstrap_df <- factor(bootstrap_df) }
+    print ("*****")
+    print ( bootstrap_df)
+    print ("*****")
     bootstrap_fit <- train(
       .outcome ~ .,
       data = bootstrap_df,
@@ -155,26 +160,41 @@ utils::globalVariables(c(
   # If level is a number < 1
   if (is.numeric(level)) {
     ci <- c((1 - level) / 2, 1 - (1 - level) / 2)
-    res <- data.frame(
-      lower = aaply(boot_samples$t, 2, quantile, probs = ci[1]),
-      mean = aaply(boot_samples$t, 2, mean),
-      upper = aaply(boot_samples$t, 2, quantile, probs = ci[2])
-    )
+    if ( data_type == "categorical" ) {
+      res <- data.frame(
+       lower = aaply(boot_samples$t, 2, quantile, probs = ci[1]),
+       mean = aaply(boot_samples$t, 2, median),
+       upper = aaply(boot_samples$t, 2, quantile, probs = ci[2])
+      )
+    } else {
+      res <- data.frame(
+       lower = aaply(boot_samples$t, 2, quantile, probs = ci[1]),
+       mean = aaply(boot_samples$t, 2, mean),
+       upper = aaply(boot_samples$t, 2, quantile, probs = ci[2])
+      )
+    }
     # if level is a function
   } else if (is.function(level)) {
-    res <- data.frame(
+    if ( data_type == "categorical" ) {
+     res <- data.frame(
+      mean = aaply(boot_samples$t, 2, median),
+      uncert = aaply(boot_samples$t, 2, level)
+     )
+    } else {
+     res <- data.frame(
       mean = aaply(boot_samples$t, 2, mean),
       uncert = aaply(boot_samples$t, 2, level)
-    )
+     )
+    }
     # else we throw an error
   } else {
     stop('Incorrect value for the "level" option.')
   }
 
-  res
+  as.numeric( res )
 }
 
-.predict_map <- function(fit, data, split = NULL, boot = NULL, level = 0.9) {
+.predict_map <- function(fit, data, split = NULL, boot = NULL, level = 0.9, data_type = "numeric" ) {
   if (.has_parallel_backend()) {
     # Get number of registered workers
     n_workers <- length(unique(split))
@@ -193,7 +213,7 @@ utils::globalVariables(c(
         predict(fit, newdata = data[split == i, ])
       } else {
         # Use bootstraping to get confidence intervals
-        .bootstrap_ci(fit = fit, fine_df = data[split == i, ], level = level, n = boot)
+        .bootstrap_ci(fit = fit, fine_df = data[split == i, ], level = level, n = boot, data_type=data_type)
       }
     }
   } else {
@@ -201,9 +221,11 @@ utils::globalVariables(c(
       res <- predict(fit, data)
     } else {
       # Use bootstraping to get confidence intervals
-      res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot)
+      res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
     }
   }
+  
+#  print( res )
   as.numeric( res )
 }
 
@@ -348,7 +370,7 @@ utils::globalVariables(c(
     if (verbose) message('| -- updating predictions')
 
     # Update dissever predictions on fine grid
-    diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL)
+    diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
 
     # if (verbose) message('| -- averaging prediction on coarse grid')
 
@@ -381,11 +403,11 @@ utils::globalVariables(c(
     lower_ci <- sqrt(max(0, mse - ci))
 
     if (data_type == 'categorical' ) {
-      error <- (diss_coarse[[nm_coarse]] == diss_coarse[['diss']])
-      error <- 1.0 - ( sum(error) / as.numeric(n) )
-      # TODO : compute confidence estimates for the classification error
-      upper_ci = error
-      lower_ci = error
+      aux <- (diss_coarse[[nm_coarse]] == diss_coarse[['diss']])
+      error <- 1.0 - ( sum(aux) / as.numeric(n) )
+      aux <- replicate( 1000 , 1.0 - ( sum(sample(aux, 0.5 * n )) / ( 0.5 * n ) ) )
+      upper_ci = quantile(aux, probs=0.975)
+      lower_ci = quantile(aux, probs=0.025)
     }
 
     # Fill result matrix
@@ -422,7 +444,7 @@ utils::globalVariables(c(
   map <- rasterFromXYZ(
     data.frame(
       diss_result[, c('x', 'y')],
-      diss = .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level)
+      diss = .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
     ),
     res = res(fine),
     crs = projection(fine)
