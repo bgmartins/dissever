@@ -34,8 +34,9 @@ In this section, we will dissever the sample dataset  with the available environ
 
 * Random Forest (`"rf"`)
 * Cubist (`"cubist"`)
-* MARS (`"earth"`)
+* Generalized Additive Model using Splines (`"gamSpline"`)
 * Linear Model (`"lm"`)
+* Multivariate Adaptive Regression Spline (`"earth"`)
 
 It is simple to switch between regression/classification methods using the `method` option of `dissever`.
 
@@ -89,6 +90,16 @@ res_lm <- dissever(
   max_iter = max_iter
 )
 
+# MARS
+res_earth <- dissever(
+  coarse = edgeroi$carbon, 
+  fine = edgeroi$predictors, 
+  method = "earth", 
+  p = p_train, 
+  min_iter = min_iter,
+  max_iter = max_iter
+)
+
 # Random Forest - example for downscaling categorical data
 # First we reclassify the numeric raster into 4 classes
 m <- cellStats(edgeroi$carbon, stat=fivenum) 
@@ -126,6 +137,7 @@ plot(res_rf, type = 'map', main = "Random Forest")
 plot(res_cubist, type = 'map', main = "Cubist")
 plot(res_gam, type = 'map', main = "GAM")
 plot(res_lm, type = 'map', main = "Linear Model")
+plot(res_earth, type = 'map', main = "MARS")
 plot(res_rf_cat, type = 'map', main = "Random Forest - Categorical Data")
 ```
 
@@ -140,6 +152,7 @@ plot(res_rf, type = 'perf', main = "Random Forest")
 plot(res_cubist, type = 'perf', main = "Cubist")
 plot(res_gam, type = 'perf', main = "GAM")
 plot(res_lm, type = 'perf', main = "Linear Model")
+plot(res_earth, type = 'perf', main = "MARS")
 plot(res_rf_cat, type = 'perf', main = "Random Forest - Categorical Data")
 ```
 
@@ -149,7 +162,7 @@ The tools provided by the `caret` package can also be leveraged, e.g. to plot th
 
 ```{r preds_obs, fig.width=6, fig.height=4}
 # Plot preds vs obs
-preds <- extractPrediction(list(res_rf$fit, res_cubist$fit, res_gam$fit, res_lm$fit))
+preds <- extractPrediction(list(res_rf$fit, res_cubist$fit, res_gam$fit, res_lm$fit, res_earth$fit))
 plotObsVsPred(preds)
 ```
 
@@ -185,7 +198,7 @@ Ensemble modelling seem to work better when the models are not too correlated --
 
 ```{r mod_cor}
 s_res <- stack(l_maps)
-names(s_res) <- c('Cubist', 'GAM', 'Linear Model', 'Random Forest')
+names(s_res) <- c('Cubist', 'GAM', 'Linear Model', 'Random Forest', 'MARS')
 s_res %>%
   as.data.frame %>%
   na.exclude %>%
