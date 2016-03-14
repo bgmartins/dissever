@@ -44,7 +44,7 @@ But first let's setup some parameters:
 ```{r params}
 min_iter <- 5 # Minimum number of iterations
 max_iter <- 15 # Maximum number of iterations
-p_train <- 0.05 # Subsampling of the initial data
+p_train <- 0.5 # Subsampling of the initial data
 ```
 
 We can then launch the 4 different disseveration procedures:
@@ -52,8 +52,8 @@ We can then launch the 4 different disseveration procedures:
 ```{r process, results='hide', message=FALSE}
 # Random Forest
 res_rf <- dissever(
-    coarse = edgeroi$carbon, # stack of fine resolution covariates
-    fine = edgeroi$predictors, # coarse resolution raster
+    coarse = edgeroi$carbon, # coarse resolution raster
+    fine = edgeroi$predictors, # stack of fine resolution covariates
     method = "rf", # regression method used for disseveration
     p = p_train, # proportion of pixels sampled for training regression model
     min_iter = min_iter, # minimum iterations
@@ -89,6 +89,18 @@ res_lm <- dissever(
   min_iter = min_iter,
   max_iter = max_iter
 )
+
+# Random Forest for downscaling categorical data
+edgeroi$categorical <- edgeroi$carbon
+res_rf_cat <- dissever(
+    coarse = edgeroi$categorical, # coarse resolution raster
+    fine = edgeroi$predictors, # stack of fine resolution covariates
+    method = "rf", # regression method used for disseveration
+    p = p_train, # proportion of pixels sampled for training regression model
+    min_iter = min_iter, # minimum iterations
+    max_iter = max_iter, # maximum iterations
+    data_type = "categorical"
+  )
 ```
 
 # Analysing the results
@@ -124,6 +136,7 @@ plot(res_rf, type = 'perf', main = "Random Forest")
 plot(res_cubist, type = 'perf', main = "Cubist")
 plot(res_gam, type = 'perf', main = "GAM")
 plot(res_lm, type = 'perf', main = "Linear Model")
+plot(res_rf_cat, type = 'perf', main = "Random Forest - Categorical Data")
 ```
 
 ## Performance of the regression 
