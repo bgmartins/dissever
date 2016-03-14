@@ -91,7 +91,9 @@ res_lm <- dissever(
 )
 
 # Random Forest for downscaling categorical data
-edgeroi$categorical <- edgeroi$carbon
+m <- cellStats(edgeroi$carbon, stat=fivenum) 
+m <- matrix( c( m[1], m[2], 1, m[2], m[3], 2, m[3], m[4], 3, m[4], m[5], 4) , ncol=3, byrow=TRUE)                
+edgeroi$categorical <- reclassify(edgeroi$carbon,m)
 res_rf_cat <- dissever(
     coarse = edgeroi$categorical, # coarse resolution raster
     fine = edgeroi$predictors, # stack of fine resolution covariates
@@ -100,7 +102,7 @@ res_rf_cat <- dissever(
     min_iter = min_iter, # minimum iterations
     max_iter = max_iter, # maximum iterations
     data_type = "categorical"
-  )
+)
 ```
 
 # Analysing the results
