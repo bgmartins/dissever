@@ -136,13 +136,8 @@ utils::globalVariables(c(
 
   # Bootstrap
   boot_samples <- boot(df, function(data, idx, method = reg_method) {
-
     bootstrap_df <- data[idx, ]
-
 #    if ( data_type == "categorical" ) { bootstrap_df <- factor(bootstrap_df) }
-    print ("*****")
-    print ( bootstrap_df)
-    print ("*****")
     bootstrap_fit <- train(
       .outcome ~ .,
       data = bootstrap_df,
@@ -224,8 +219,6 @@ utils::globalVariables(c(
       res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
     }
   }
-  
-#  print( res )
   as.numeric( res )
 }
 
@@ -295,9 +288,14 @@ utils::globalVariables(c(
   # Compute initial model
   if (verbose) message('Selecting best model parameters')
 
+  y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
+  if ( data_type == "count" ) { 
+     factor = nrow(fine_df) / nrow( coarse_df )
+     y_aux = y_aux / as.numeric( factor )
+  }
   fit <- .update_model(
     x = fine_df[id_spl, nm_covariates],
-    y = fine_df[id_spl, nm_coarse, drop = TRUE],
+    y = y_aux,
     method = method,
     control = train_control_init,
     tune_grid = tune_grid,
@@ -321,6 +319,10 @@ utils::globalVariables(c(
   diss_result <- fine_df[, c('x', 'y', 'cell', nm_coarse)]
   # Our first approximation is actually the nearest neighbour interpolation
   diss_result$diss <- fine_df[[nm_coarse]]
+  if ( data_type == "count" ) {
+     factor = nrow(fine_df) / nrow( coarse_df )
+     diss_result$diss = diss_result$diss / as.numeric( factor )
+  }
 
   # Initiate dissever results data.frame aggregated back to coarse grid
   diss_coarse <- coarse_df
@@ -341,7 +343,7 @@ utils::globalVariables(c(
   for (k in 1:max_iter){
 
     if (verbose) message('| - iteration ', k)
-    # if (verbose) message('| -- computing adjustement factor')
+    if (verbose) message('| -- computing adjustement factor')
 
     # Calculate adjustment factor
     diss_coarse$adjust <- diss_coarse[[nm_coarse]] / diss_coarse[['diss']]
@@ -350,7 +352,7 @@ utils::globalVariables(c(
     diss_result$adjust <- .join_interpol(diss_coarse, fine_df, attr = 'adjust', by = 'cell')[, 'adjust']
 
     # Apply adjustement and replace the current
-    diss_result$diss <- diss_result$adjust * diss_result$diss
+    if ( not( data_type == "categorical" ) ) { diss_result$diss <- diss_result$adjust * diss_result$diss }
 
     # Update model
     if (verbose) message('| -- updating model')
@@ -372,7 +374,7 @@ utils::globalVariables(c(
     # Update dissever predictions on fine grid
     diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
 
-    # if (verbose) message('| -- averaging prediction on coarse grid')
+    if (verbose) message('| -- computing aggregates of predictions on coarse grid')
 
     # Aggregate average prediction on coarse grid
     summary_metric <- function( data, type ) {
@@ -385,7 +387,7 @@ utils::globalVariables(c(
       summarise(diss = summary_metric(diss,data_type)) %>%
       inner_join(coarse_df, ., by = "cell")
 
-    # if (verbose) message('| -- computing performance stats')
+    if (verbose) message('| -- computing performance stats')
 
     # compute error
     n <- nrow(diss_coarse)
