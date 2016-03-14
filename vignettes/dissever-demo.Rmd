@@ -43,7 +43,7 @@ But first let's setup some parameters:
 ```{r params}
 min_iter <- 5 # Minimum number of iterations
 max_iter <- 15 # Maximum number of iterations
-p_train <- 0.5 # Subsampling of the initial data
+p_train <- 0.1 # Subsampling of the initial data
 ```
 
 We can then launch the different disseveration procedures:
@@ -94,7 +94,6 @@ res_lm <- dissever(
 m <- cellStats(edgeroi$carbon, stat=fivenum) 
 m <- matrix( c( m[1], m[2], 1, m[2], m[3], 2, m[3], m[4], 3, m[4], m[5], 4) , ncol=3, byrow=TRUE)                
 edgeroi$categorical <- reclassify(edgeroi$carbon,m)
-# plot( edgeroi$categorical , col = viridis(4) , interpolate=FALSE )
 # We then apply the downscaling procedure
 res_rf_cat <- dissever(
     coarse = edgeroi$categorical, # coarse resolution raster
