@@ -282,7 +282,8 @@ utils::globalVariables(c(
   if (!is.null(nmax) && nmax > 0) {
     n_spl <- min(n_spl, nmax)
   }
-
+  
+  # TODO : instead of sampling random fine resolution grid cells, we should sample coarse grid cells
   id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
 
   # Compute initial model
