@@ -188,8 +188,8 @@ We can either take the best option (in this case Random Forest -- but the result
 w <- perf$rsq / sum(perf$rsq)
 
 # Make stack of weighted predictions and compute sum
-l_maps <- list(res_cubist$map, res_gam$map, res_lm$map, res_rf$map)
-ens <- lapply(1:4, function(x) l_maps[[x]] * w[x]) %>%
+l_maps <- list(res_cubist$map, res_gam$map, res_lm$map, res_rf$map, res_earth$map)
+ens <- lapply(1:5, function(x) l_maps[[x]] * w[x]) %>%
   stack %>%
   sum
 ```
