@@ -226,7 +226,7 @@ utils::globalVariables(c(
     coarse,
     fine,
     method = "rf",
-    p = 0.5, nmax = NULL,
+    p = NULL, nmax = NULL,
     thresh = 0.01,
     min_iter = 5,
     max_iter = 20,
@@ -275,6 +275,10 @@ utils::globalVariables(c(
     fine_df,
     .join_interpol(coarse_df = coarse_df[, c('cell', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell')
   )
+  
+  if (is.null(p)) {
+    p = as.numeric( nrow( coarse_df ) / nrow(fine_df) )
+  }
 
   # Sub-sample for modelling
   n_spl <- ceiling(nrow(fine_df) * p) # Number of cells to sample
@@ -524,7 +528,7 @@ if(!isGeneric("dissever")) {
 #' @param coarse object of class \code{"RasterLayer"}, the coarse-resolution layer that needs to be downscaled
 #' @param fine object of class \code{"RasterStack"}, the fine-resolution stack of predictive covariates
 #' @param method a string specifying which classification or regression model to use (via the caret package). Possible values are found using names(caret::getModelInfo()).
-#' @param p numeric, proportion of the fine map that is sampled for fitting the dissever model (between 0 and 1, defaults to 0.5)
+#' @param p numeric, proportion of the fine map that is sampled for fitting the dissever model (between 0 and 1, defaults to the ratio between the coarse grid resolution and the fine grid resolution)
 #' @param nmax numeric maximum number of pixels selected for fitting the dissever model. It will override the number of pixels chosen by the \code{p} option if that number is over the value passed to \code{nmax}.
 #' @param thresh numeric, dissever iterations will proceed until the error of the dissever model reaches this value, or until the maximum number of iterations is met (defaults to 0.01)
 #' @param min_iter numeric, minimum number of iterations (defaults to 5)
