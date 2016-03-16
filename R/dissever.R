@@ -268,7 +268,7 @@ utils::globalVariables(c(
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
   # Add coarse cell ID to fine data.frame
   fine_df[['cell']] <- as.integer(.create_lut_fine(ids_coarse, fine))
-  # fine_df <- na.exclude(fine_df)
+  fine_df <- na.exclude(fine_df)
   
   print( coarse_df$cell )
   print( fine_df$cell )
