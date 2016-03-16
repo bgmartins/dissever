@@ -139,7 +139,7 @@ Below are the dissevered maps for the different methods:
 
 ```{r maps, fig.width=8, fig.height=8}
 # Plotting maps
-par(mfrow = c(2, 4))
+par(mfrow = c(4, 2))
 plot(res_rf, type = 'map', main = "Random Forest")
 plot(res_cubist, type = 'map', main = "Cubist")
 plot(res_gam, type = 'map', main = "GAM")
@@ -154,7 +154,7 @@ We can also analyse and plot the optimisation of the dissevering model:
 
 ```{r optim, fig.width=8, fig.height=8}
 # Plot performance
-par(mfrow = c(2, 4))
+par(mfrow = c(4, 2))
 plot(res_rf, type = 'perf', main = "Random Forest")
 plot(res_cubist, type = 'perf', main = "Cubist")
 plot(res_gam, type = 'perf', main = "GAM")
