@@ -267,8 +267,8 @@ utils::globalVariables(c(
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
   # Add coarse cell ID to fine data.frame
-  fine_df <- na.exclude(fine_df)
   fine_df[['cell']] <- as.integer(.create_lut_fine(ids_coarse, fine))
+  fine_df <- na.exclude(fine_df)
 
   # Resampled national model onto fine grid
   fine_df <- cbind(
