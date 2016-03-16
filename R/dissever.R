@@ -56,7 +56,7 @@ utils::globalVariables(c(
 }
 
 .create_lut_fine <- function(coarse, fine) {
-  extract(coarse, coordinates(fine))
+  extract(coarse, coordinates(fine), na.rm=FALSE)
 }
 
 .default_control_init <- caret::trainControl(
