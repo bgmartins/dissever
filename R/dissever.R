@@ -275,6 +275,7 @@ utils::globalVariables(c(
     fine_df,
     .join_interpol(coarse_df = coarse_df[, c('cell', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell')
   )
+  fine_df <- na.exclude(fine_df)
   
   if (is.null(p)) {
     p = as.numeric( nrow( coarse_df ) / nrow(fine_df) )
