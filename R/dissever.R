@@ -262,14 +262,18 @@ utils::globalVariables(c(
   # Convert coarse data to data.frame
   coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
   coarse_df$cell <- 1:nrow(coarse_df) # integer
-  coarse_df <- na.exclude(coarse_df)
+  # coarse_df <- na.exclude(coarse_df)
 
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
   # Add coarse cell ID to fine data.frame
   fine_df[['cell']] <- as.integer(.create_lut_fine(ids_coarse, fine))
   # fine_df <- na.exclude(fine_df)
-
+  
+  print( coarse_df$cell )
+  print( fine_df$cell )
+  print( nm_coarse )
+  
   # Resampled national model onto fine grid
   fine_df <- cbind(
     fine_df,
