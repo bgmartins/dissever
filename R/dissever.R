@@ -239,7 +239,7 @@ utils::globalVariables(c(
   ){
 
   if (class(coarse) == "SpatialPolygonsDataFrame") {
-    minres <- min(res(fine)) + 0.00001
+    minres <- min(res(fine)) * 2.0
     coarse_ids <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "FIPSNO", fun='first')
     coarse <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "BIR74", fun='first')
   }
@@ -281,7 +281,7 @@ utils::globalVariables(c(
   fine_df <- na.exclude(fine_df)
   
   if (is.null(p)) {
-    p = as.numeric( nrow( coarse_df ) / nrow(fine_df) ) * 0.999
+    p = as.numeric( nrow( coarse_df ) / nrow(fine_df) )
   }
 
   # Sub-sample for modelling
