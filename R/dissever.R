@@ -276,6 +276,7 @@ utils::globalVariables(c(
   } else {
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)$cell
+    coarse_df$cell[is.na(coarse_df$cell)] <- max( coarse_df$cell ) + 1
   } 
 
   print( ncell(coarse) )
