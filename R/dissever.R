@@ -295,6 +295,8 @@ utils::globalVariables(c(
     .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
   )
   
+  print(" test 1 ")
+  
   coarse_df <- na.exclude(coarse_df)
   fine_df <- na.exclude(fine_df)
   
