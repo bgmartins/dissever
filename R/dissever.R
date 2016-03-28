@@ -250,7 +250,7 @@ utils::globalVariables(c(
   } else if ( add_pycno ) {
       minres <- min(res(fine))
       poly = rasterToPolygons(coarse)
-      pycno <- pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse, xy = FALSE), min(minres), converge=1 )
+      pycno <- pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), min(minres), converge=1 )
 #      fine <- addLayer( fine , pycno )
   }
 
