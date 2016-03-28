@@ -239,19 +239,18 @@ utils::globalVariables(c(
     verbose = FALSE
   ){
 
-  if (class(coarse) == "SpatialPolygonsDataFrame") {
+  input_polygons = class(coarse) == "SpatialPolygonsDataFrame"
+  if ( input_polygons ) {
     minres <- min(res(fine))
-    if ( add_pycno ) {
-      pycnolayer <- raster( pycno( coarse, coarse[["BIR74"]], min(minres), converge=1 ) )
-      fine <- addLayer( fine , pycnolayer )
-    }
+    crate <- 1
+    if ( add_pycno ) { crate <- 5 }
+    pycnolayer <- raster( pycno( coarse, coarse[["BIR74"]], min(minres), converge=crate ) )
     ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "FIPSNO", fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "BIR74", fun='first')
   } else if ( add_pycno ) {
       minres <- min(res(fine))
-      pycno <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=1 ) )
-      fine <- addLayer( fine , pycno )
+      pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=1 ) )
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
@@ -268,7 +267,7 @@ utils::globalVariables(c(
   nm_covariates <- names(fine)
 
   # Get cell numbers of the coarse grid and convert coarse data to data.frame
-  if (class(coarse) != "SpatialPolygonsDataFrame") {
+  if ( !input_polygons ) {
     ids_coarse <- raster(coarse)
     ids_coarse[] <- 1:ncell(coarse)
     names(ids_coarse) <- 'cell'
@@ -341,8 +340,12 @@ utils::globalVariables(c(
   # Our first approximation is actually the nearest neighbour interpolation
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
+    if ( add_pycno || input_polygons ) {
+     diss_result$diss = .as_data_frame_factors(pycnolayer, xy = FALSE)
+    } else {
      factor = nrow(fine_df) / nrow( coarse_df )
      diss_result$diss = diss_result$diss / as.numeric( factor )
+    }
   }
 
   # Initiate dissever results data.frame aggregated back to coarse grid
