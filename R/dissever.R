@@ -295,8 +295,6 @@ utils::globalVariables(c(
     .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
   )
   
-  print(" test 1 ")
-  
   coarse_df <- na.exclude(coarse_df)
   fine_df <- na.exclude(fine_df)
   
@@ -348,7 +346,7 @@ utils::globalVariables(c(
   perf <- matrix(ncol = 3, nrow = 0, dimnames = list(NULL,c("lower_error", "error", "upper_error")))
 
   # Initiate dissever result data.frame
-  diss_result <- fine_df[, c('x', 'y', 'cell', nm_coarse)]
+  diss_result <- fine_df[, c('x', 'y', 'cell', 'cell2', nm_coarse)]
   # Our first approximation is actually the nearest neighbour interpolation
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
@@ -385,7 +383,7 @@ utils::globalVariables(c(
     diss_coarse$adjust <- diss_coarse[[nm_coarse]] / diss_coarse[['diss']]
 
     # Resample adjustement factor to fine grid
-    diss_result$adjust <- .join_interpol(diss_coarse, fine_df, attr = 'adjust', by = 'cell')[, 'adjust']
+    diss_result$adjust <- .join_interpol(diss_coarse, fine_df, attr = 'adjust', by = 'cell2')[, 'adjust']
 
     # Apply adjustement and replace the current
     if ( !( data_type == "categorical" ) ) { diss_result$diss <- diss_result$adjust * diss_result$diss }
