@@ -250,7 +250,7 @@ utils::globalVariables(c(
     stop('The parameter coarse_var_names should only be used when providing a SpatialPolygonsDataFrame as the coarse data')
   }
   
-  if ( is.null(coarse_var_names) ) { coarse_var_names <- names( nc.sids ) }
+  if ( input_polygons && is.null(coarse_var_names) ) { coarse_var_names <- names( coarse ) }
   
   if ( input_polygons && length(coarse_var_names) > 2 ) {
     stop('The parameter coarse_var_names should be used to provide the names for attributes corresponding to the IDs of polygons and the quantity to be downscaled')
