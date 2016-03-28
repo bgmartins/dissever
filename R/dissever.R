@@ -239,7 +239,7 @@ utils::globalVariables(c(
   ){
 
   if (class(coarse) == "SpatialPolygonsDataFrame") {
-    minres <- min(res(fine)) + 0.0001
+    minres <- min(res(fine)) + 0.00001
     coarse_ids <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "FIPSNO", fun='first')
     coarse <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "BIR74", fun='first')
   }
@@ -577,11 +577,6 @@ if(!isGeneric("dissever")) {
 #' plot(res_lm, type = 'map', main = "Dissever using GAM")
 #' plot(res_lm, type = 'perf', main = "Dissever using GAM")
 #'
-#setMethod(
-#  'dissever',
-#  signature(coarse = "RasterLayer", fine = "RasterStack"),
-#  .dissever
-#)
 setMethod(
   'dissever',
   signature(fine = "RasterStack"),
