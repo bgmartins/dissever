@@ -235,7 +235,7 @@ utils::globalVariables(c(
     train_control_init = .default_control_init,
     train_control_iter = .default_control_iter,
     data_type = "numeric",
-    add_pycno = TRUE,
+    add_pycno = FALSE,
     verbose = FALSE
   ){
 
@@ -250,7 +250,7 @@ utils::globalVariables(c(
     coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "BIR74", fun='first')
   } else if ( add_pycno ) {
       minres <- min(res(fine))
-      pycno <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), min(minres), converge=1 ) )
+      pycno <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=1 ) )
       fine <- addLayer( fine , pycno )
   }
 
