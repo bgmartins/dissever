@@ -281,7 +281,7 @@ utils::globalVariables(c(
   fine_df <- na.exclude(fine_df)
   
   if (is.null(p)) {
-    p = as.numeric( nrow( coarse_df ) / nrow(fine_df) )
+    p = as.numeric( nrow( coarse_df ) / nrow(fine_df) ) * 0.5
   }
 
   # Sub-sample for modelling
@@ -528,7 +528,7 @@ if(!isGeneric("dissever")) {
 #' @name dissever
 #' @aliases dissever,RasterLayer,RasterStack-method
 #' @description Performs spatial downscaling of coarse grid mapping to fine grid mapping using predictive covariates and a model fitted using the caret package.
-#' @param coarse object of class \code{"RasterLayer"}, the coarse-resolution layer that needs to be downscaled
+#' @param coarse object of class \code{"RasterLayer"}, the coarse-resolution layer that needs to be downscaled, or coarse object of class \code{"SpatialPolygonsDataFrame"} with two attributes
 #' @param fine object of class \code{"RasterStack"}, the fine-resolution stack of predictive covariates
 #' @param method a string specifying which classification or regression model to use (via the caret package). Possible values are found using names(caret::getModelInfo()).
 #' @param p numeric, proportion of the fine map that is sampled for fitting the dissever model (between 0 and 1, defaults to the ratio between the coarse grid resolution and the fine grid resolution)
