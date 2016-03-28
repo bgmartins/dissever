@@ -239,7 +239,7 @@ utils::globalVariables(c(
   ){
 
   if (class(coarse) == "SpatialPolygonsDataFrame") {
-    minres <- min(res(fine)) * 10.0
+    minres <- min(res(fine)) * 1.25
     coarse_ids <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "FIPSNO", fun='first')
     coarse <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "BIR74", fun='first')
   }
