@@ -579,6 +579,6 @@ if(!isGeneric("dissever")) {
 #'
 setMethod(
   'dissever',
-  signature(coarse = "RasterLayer", fine = "RasterStack"),
+  signature(coarse = "ANY", fine = "RasterStack"),
   .dissever
 )
