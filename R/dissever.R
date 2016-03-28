@@ -223,6 +223,7 @@ utils::globalVariables(c(
 .dissever <- function(
     coarse,
     fine,
+    coarse_var_names = NULL,
     method = "rf",
     p = NULL, nmax = NULL,
     thresh = 0.01,
@@ -240,13 +241,28 @@ utils::globalVariables(c(
   ){
 
   input_polygons = class(coarse) == "SpatialPolygonsDataFrame"
+  
+  if ( !input_polygons && ! ( class(coarse) == "RasterStack" ) ) {
+    stop('The course data should be provided as a SpatialPolygonsDataFrame or as a RasterStack')
+  }
+  
+  if ( !input_polygons && !is.null(coarse_var_names) ) {
+    stop('The parameter coarse_var_names should only be used when providing a SpatialPolygonsDataFrame as the coarse data')
+  }
+  
+  if ( is.null(coarse_var_names) ) { coarse_var_names <- names( nc.sids ) }
+  
+  if ( input_polygons && length(coarse_var_names) > 2 ) {
+    stop('The parameter coarse_var_names should be used to provide the names for attributes corresponding to the IDs of polygons and the quantity to be downscaled')
+  }
+  
   if ( input_polygons ) {
     minres <- min(res(fine))
-    if ( add_pycno ) { pycnolayer <- raster( pycno( coarse, coarse[["BIR74"]], min(minres), converge=3 ) ) }
-    else { pycnolayer <- raster( pycno( coarse, coarse[["BIR74"]], min(minres), converge=0 ) ) }    
-    ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "FIPSNO", fun='first')
+    if ( add_pycno ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[1]]], min(minres), converge=3 ) ) }
+    else { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[1]]], min(minres), converge=0 ) ) }    
+    ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[0], fun='first')
     names(ids_coarse) <- 'cell'
-    coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "BIR74", fun='first')    
+    coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')    
   } else if ( add_pycno ) {
     minres <- min(res(fine))
     pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=3 ) )
