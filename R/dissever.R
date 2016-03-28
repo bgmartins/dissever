@@ -310,8 +310,12 @@ utils::globalVariables(c(
 
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
   if ( data_type == "count" ) { 
-     factor = nrow(fine_df) / nrow( coarse_df )
-     y_aux = y_aux / as.numeric( factor )
+     if ( add_pycno || input_polygons ) {
+      y_aux = .as_data_frame_factors(pycnolayer, xy = FALSE)
+     } else {
+      factor = nrow(fine_df) / nrow( coarse_df )
+      y_aux = y_aux / as.numeric( factor )
+     }
   }
   fit <- .update_model(
     x = fine_df[id_spl, nm_covariates],
