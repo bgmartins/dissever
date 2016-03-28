@@ -288,7 +288,7 @@ utils::globalVariables(c(
   aux <- .join_interpol(coarse_df = coarse_df[, c('cell', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell')
   print ( nm_coarse )
   print ( length(aux) )
-  print ( length(fine_df$cell )
+  print ( length(fine_df$cell ) )
   print ( fine_df[0:5,] )
   
   # Resampled national model onto fine grid
