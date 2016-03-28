@@ -275,13 +275,17 @@ utils::globalVariables(c(
     coarse_df$cell <- 1:nrow(coarse_df) # integer
   } else {
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
-    coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)[['cell']]
+    coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)
   } 
 
   print( ncell(coarse) )
   print( ncell(ids_coarse) )
   print( nrow(coarse_df) )
   print( nrow( .as_data_frame_factors(coarse, xy = TRUE)) )
+  
+  print( coarse_df$cell )
+  print( 1:nrow(coarse_df) )
+  
 
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
