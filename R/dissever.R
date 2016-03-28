@@ -150,8 +150,6 @@ utils::globalVariables(c(
 
   }, n)
 
-  # generate CI estimates + mean
-
   # If level is a number < 1
   if (is.numeric(level)) {
     ci <- c((1 - level) / 2, 1 - (1 - level) / 2)
@@ -240,12 +238,17 @@ utils::globalVariables(c(
     verbose = FALSE
   ){
 
-  # Stop if resolution of covariates is not higher than resolution of coarse data
-  if (min(res(fine)) >= min(res(coarse))) {
-    stop('Resolution of fine data should be higer than resolution of coarse data')
+  if (class(coarse) == "SpatialPolygonsDataFrame") {
+    coarse_pycno <- raster( pycno( coarse, coarse["attribute_data"], 0.05, converge=1 ) , resolution=min(res(fine)), ext=extent(coarse) )
+    coarse_ids <- rasterize(coarse, raster( resolution=min(res(fine), ext=extent(coarse) ), "attribute_id", fun='first')
+    coarse <- rasterize(coarse, raster( resolution=min(res(fine)), ext=extent(coarse) ), "attribute_data", fun='first')
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
+  if (min(res(fine)) > min(res(coarse))) {
+    stop('Resolution of fine data should be higer than resolution of coarse data')
+  }
+
   if (not(data_type == "numeric" || data_type=="count" || data_type=="categorical")) {
     stop('Data type should be numeric, categorical or count')
   }
