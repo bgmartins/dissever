@@ -5,7 +5,7 @@
 # See:
 # http://stackoverflow.com/questions/9439256/how-can-i-handle-r-cmd-check-no-visible-binding-for-global-variable-notes-when
 # https://github.com/smbache/magrittr/issues/29
-utils::globalVariables(c(re
+utils::globalVariables(c(
   "cell",
   "diss",
   ".",
@@ -239,7 +239,7 @@ utils::globalVariables(c(re
   ){
 
   if (class(coarse) == "SpatialPolygonsDataFrame") {
-    minres <- min(res(fine))
+    minres <- min(res(fine)) + 0.0001
     coarse_ids <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "FIPSNO", fun='first')
     coarse <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "BIR74", fun='first')
   }
