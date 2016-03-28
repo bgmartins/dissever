@@ -258,9 +258,9 @@ utils::globalVariables(c(
     minres <- min(res(fine))
     if ( add_pycno ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=3 ) ) }
     else { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0 ) ) }    
-    ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.0001, ext=extent(coarse) ), coarse_var_names[1], fun='first')
+    ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')
     names(ids_coarse) <- 'cell'
-    coarse <- rasterize(coarse, raster( resolution=minres * 1.0001, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
+    coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
   } else if ( add_pycno ) {
     minres <- min(res(fine))
     pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=3 ) )
