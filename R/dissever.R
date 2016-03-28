@@ -245,9 +245,9 @@ utils::globalVariables(c(
     pycno_conv <- 0
     if ( add_pycno ) { pycno_conv <- 3 }
     pycnolayer <- raster( pycno( coarse, coarse[["BIR74"]], min(minres), converge=pycno_conv ) )
-    ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "FIPSNO", fun='first')
+    ids_coarse <- raster( rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "FIPSNO", fun='first') )
     names(ids_coarse) <- 'cell'
-    coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "BIR74", fun='first')
+    coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "BIR74", fun='first')    
   } else if ( add_pycno ) {
       minres <- min(res(fine))
       pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=3 ) )
@@ -275,16 +275,14 @@ utils::globalVariables(c(
     coarse_df$cell <- 1:nrow(coarse_df) # integer
   } else {
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
-    coarse_df$cell <- na.exclude(.as_data_frame_factors(ids_coarse, xy = FALSE))[['cell']]
+    coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = FALSE)[['cell']]
   } 
 
   print( ncell(coarse) )
   print( ncell(ids_coarse) )
   print( nrow(coarse_df) )
   print( nrow( .as_data_frame_factors(coarse, xy = TRUE)) )
-  
   print( coarse_df$cell )
-  
 
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
