@@ -281,7 +281,7 @@ utils::globalVariables(c(
   fine_df <- na.exclude(fine_df)
   
   if (is.null(p)) {
-    p = as.numeric( nrow( coarse_df ) / nrow(fine_df) ) * 0.5
+    p = as.numeric( nrow( coarse_df ) / nrow(fine_df) ) * 0.95
   }
 
   # Sub-sample for modelling
