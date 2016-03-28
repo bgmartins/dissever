@@ -249,7 +249,7 @@ utils::globalVariables(c(
     stop('Resolution of fine data should be higer than resolution of coarse data')
   }
 
-  if (not(data_type == "numeric" || data_type=="count" || data_type=="categorical")) {
+  if (!(data_type == "numeric" || data_type=="count" || data_type=="categorical")) {
     stop('Data type should be numeric, categorical or count')
   }
   
@@ -360,7 +360,7 @@ utils::globalVariables(c(
     diss_result$adjust <- .join_interpol(diss_coarse, fine_df, attr = 'adjust', by = 'cell')[, 'adjust']
 
     # Apply adjustement and replace the current
-    if ( not( data_type == "categorical" ) ) { diss_result$diss <- diss_result$adjust * diss_result$diss }
+    if ( !( data_type == "categorical" ) ) { diss_result$diss <- diss_result$adjust * diss_result$diss }
 
     # Update model
     if (verbose) message('| -- updating model')
