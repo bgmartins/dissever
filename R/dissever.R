@@ -242,14 +242,14 @@ utils::globalVariables(c(
   if (class(coarse) == "SpatialPolygonsDataFrame") {
     minres <- min(res(fine))
     if ( add_pycno ) {
-      pycno <- pycno( coarse, coarse[["BIR74"]], 0.05, converge=1 )
+      pycno <- pycno( coarse, coarse[["BIR74"]], 0.1, converge=1 )
       fine <- addLayer( fine , pycno )
     }
     coarse_ids <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "FIPSNO", fun='first')
     coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "BIR74", fun='first')
   } else if ( add_pycno ) {
       minres <- min(res(fine))
-      pycno <- pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.05, converge=1 )
+      pycno <- pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=1 )
       fine <- addLayer( fine , pycno )
   }
 
