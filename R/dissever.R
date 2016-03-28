@@ -242,15 +242,14 @@ utils::globalVariables(c(
   input_polygons = class(coarse) == "SpatialPolygonsDataFrame"
   if ( input_polygons ) {
     minres <- min(res(fine))
-    pycno_conv <- 0
-    if ( add_pycno ) { pycno_conv <- 3 }
-    pycnolayer <- raster( pycno( coarse, coarse[["BIR74"]], min(minres), converge=pycno_conv ) )
+    if ( add_pycno ) { pycnolayer <- raster( pycno( coarse, coarse[["BIR74"]], min(minres), converge=3 ) ) }
+    else { pycnolayer <- raster( pycno( coarse, coarse[["BIR74"]], min(minres), converge=0 ) ) }    
     ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "FIPSNO", fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "BIR74", fun='first')    
   } else if ( add_pycno ) {
-      minres <- min(res(fine))
-      pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=3 ) )
+    minres <- min(res(fine))
+    pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=3 ) )
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
@@ -272,29 +271,28 @@ utils::globalVariables(c(
     ids_coarse[] <- 1:ncell(coarse)
     names(ids_coarse) <- 'cell'
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
-    coarse_df$cell <- 1:nrow(coarse_df) # integer
+    coarse_df$cell <- 1:nrow(coarse_df)
+    coarse_df$cell2 <- coarse_df$cell
   } else {
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)[['cell']]
     coarse_df$cell <- sapply(coarse_df$cell, function(x) if(is.factor(x)) { as.numeric(x) } else { x })
+    coarse_df$cell2 <- 1:nrow(coarse_df)
   } 
 
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
   # Add coarse cell ID to fine data.frame
   fine_df[['cell']] <- as.integer(.create_lut_fine(ids_coarse, fine))
+  ids_coarse2 <- raster(coarse)
+  ids_coarse2[] <- 1:ncell(coarse)
+  fine_df[['cell2']] <- as.integer(.create_lut_fine(ids_coarse2, fine))
   fine_df <- na.exclude(fine_df)
 
-  aux <- .join_interpol(coarse_df = coarse_df[, c('cell', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell')
-  print ( nm_coarse )
-  print ( length(aux) )
-  print ( length(fine_df$cell ) )
-  print ( fine_df[0:5,] )
-  
   # Resampled national model onto fine grid
   fine_df <- cbind(
     fine_df,
-    .join_interpol(coarse_df = coarse_df[, c('cell', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell')
+    .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
   )
   
   coarse_df <- na.exclude(coarse_df)
