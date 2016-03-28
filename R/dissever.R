@@ -235,17 +235,18 @@ utils::globalVariables(c(
     train_control_init = .default_control_init,
     train_control_iter = .default_control_iter,
     data_type = "numeric",
-    add_pycno = TRUE,
+    add_pycno = FALSE,
     verbose = FALSE
   ){
 
   if (class(coarse) == "SpatialPolygonsDataFrame") {
     minres <- min(res(fine))
-    if ( add_pycno ) {
-      pycno <- pycno( coarse, coarse[["BIR74"]], 0.1, converge=1 )
-      fine <- addLayer( fine , pycno )
-    }
-    coarse_ids <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "FIPSNO", fun='first')
+#    if ( add_pycno ) {
+#      pycno <- pycno( coarse, coarse[["BIR74"]], 0.1, converge=1 )
+#      fine <- addLayer( fine , pycno )
+#    }
+    ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "FIPSNO", fun='first')
+    names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "BIR74", fun='first')
   } else if ( add_pycno ) {
       minres <- min(res(fine))
@@ -266,15 +267,18 @@ utils::globalVariables(c(
   nm_coarse <- names(coarse)
   nm_covariates <- names(fine)
 
-  # Get cell numbers of the coarse grid
-  ids_coarse <- raster(coarse)
-  ids_coarse[] <- 1:ncell(coarse)
-  names(ids_coarse) <- 'cell'
-
-  # Convert coarse data to data.frame
-  coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
-  coarse_df$cell <- 1:nrow(coarse_df) # integer
-
+  # Get cell numbers of the coarse grid and convert coarse data to data.frame
+  if (class(coarse) != "SpatialPolygonsDataFrame") {
+    ids_coarse <- raster(coarse)
+    ids_coarse[] <- 1:ncell(coarse)
+    names(ids_coarse) <- 'cell'
+    coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
+    coarse_df$cell <- 1:nrow(coarse_df) # integer
+  } else {
+    coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
+    coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)[['cell']]
+  }  
+  
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
   # Add coarse cell ID to fine data.frame
