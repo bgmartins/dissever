@@ -5,7 +5,7 @@
 # See:
 # http://stackoverflow.com/questions/9439256/how-can-i-handle-r-cmd-check-no-visible-binding-for-global-variable-notes-when
 # https://github.com/smbache/magrittr/issues/29
-utils::globalVariables(c(
+utils::globalVariables(c(re
   "cell",
   "diss",
   ".",
@@ -239,9 +239,8 @@ utils::globalVariables(c(
   ){
 
   if (class(coarse) == "SpatialPolygonsDataFrame") {
-    coarse_pycno <- raster( pycno( coarse, coarse[["BIR74"]], 0.05, converge=1 ) )
     coarse_ids <- rasterize(coarse, raster( resolution=min(res(fine)), ext=extent(coarse) ), "FIPSNO", fun='first')
-    coarse <- rasterize(coarse, raster( resolution=min(res(fine)), ext=extent(coarse) ), "BIR74", fun='first')
+    coarse <- rasterize(coarse, raster( resolution=min(res(fine)) + 0.0001, ext=extent(coarse) ), "BIR74", fun='first')
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
