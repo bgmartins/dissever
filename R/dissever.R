@@ -267,16 +267,16 @@ utils::globalVariables(c(
   nm_covariates <- names(fine)
 
   # Get cell numbers of the coarse grid and convert coarse data to data.frame
-  if ( !input_polygons ) {
+#  if ( !input_polygons ) {
     ids_coarse <- raster(coarse)
     ids_coarse[] <- 1:ncell(coarse)
     names(ids_coarse) <- 'cell'
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- 1:nrow(coarse_df) # integer
-  } else {
-    coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
-    coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)[['cell']]
-  }  
+#  } else {
+#    coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
+#    coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)[['cell']]
+#  }  
   
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
