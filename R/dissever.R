@@ -577,8 +577,13 @@ if(!isGeneric("dissever")) {
 #' plot(res_lm, type = 'map', main = "Dissever using GAM")
 #' plot(res_lm, type = 'perf', main = "Dissever using GAM")
 #'
+#setMethod(
+#  'dissever',
+#  signature(coarse = "RasterLayer", fine = "RasterStack"),
+#  .dissever
+#)
 setMethod(
   'dissever',
-  signature(coarse = "ANY", fine = "RasterStack"),
+  signature(fine = "RasterStack"),
   .dissever
 )
