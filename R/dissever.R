@@ -287,8 +287,8 @@ utils::globalVariables(c(
 
   print( coarse_df[, c('cell', nm_coarse)][0:10,] )
   print( fine_df[0:10,] )
-  print( len(coarse_df[, c('cell', nm_coarse)]) )
-  print( len(fine_df) )
+  print( length(coarse_df[, c('cell', nm_coarse)]) )
+  print( length(fine_df) )
 
   # Resampled national model onto fine grid
   fine_df <- cbind(
