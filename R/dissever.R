@@ -242,16 +242,15 @@ utils::globalVariables(c(
   if (class(coarse) == "SpatialPolygonsDataFrame") {
     minres <- min(res(fine))
     if ( add_pycno ) {
-      pycno <- pycno( coarse, coarse[["BIR74"]], min(minres), converge=1 )
-#      fine <- addLayer( fine , pycno )
+      pycno <- pycno( coarse, coarse[["BIR74"]], 0.05, converge=1 )
+      fine <- addLayer( fine , pycno )
     }
     coarse_ids <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "FIPSNO", fun='first')
     coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "BIR74", fun='first')
   } else if ( add_pycno ) {
       minres <- min(res(fine))
-      poly = rasterToPolygons(coarse)
-      pycno <- pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), min(minres), converge=1 )
-#      fine <- addLayer( fine , pycno )
+      pycno <- pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.05, converge=1 )
+      fine <- addLayer( fine , pycno )
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
