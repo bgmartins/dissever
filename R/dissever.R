@@ -235,16 +235,16 @@ utils::globalVariables(c(
     train_control_init = .default_control_init,
     train_control_iter = .default_control_iter,
     data_type = "numeric",
-    add_pycno = FALSE,
+    add_pycno = TRUE,
     verbose = FALSE
   ){
 
   if (class(coarse) == "SpatialPolygonsDataFrame") {
     minres <- min(res(fine))
-#    if ( add_pycno ) {
-#      pycno <- pycno( coarse, coarse[["BIR74"]], 0.1, converge=1 )
-#      fine <- addLayer( fine , pycno )
-#    }
+    if ( add_pycno ) {
+      pycnolayer <- pycno( coarse, coarse[["BIR74"]], 0.1, converge=1 )
+      fine <- addLayer( fine , pycnolayer )
+    }
     ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "FIPSNO", fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "BIR74", fun='first')
