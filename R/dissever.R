@@ -285,10 +285,13 @@ utils::globalVariables(c(
   fine_df[['cell']] <- as.integer(.create_lut_fine(ids_coarse, fine))
   fine_df <- na.exclude(fine_df)
 
+  coarse_df$cell <- sapply(coarse_df$cell, function(x) if(is.na(x)) { -1 } else { x })
+  fine_df$cell <- sapply(fine_df$cell, function(x) if(is.na(x)) { -1 } else { x })
+
   print( coarse_df[, c('cell', nm_coarse)][0:10,] )
   print( fine_df[0:10,] )
-  print( length(coarse_df[, c('cell', nm_coarse)]) )
-  print( length(fine_df) )
+  print( length(coarse_df[, c('cell', nm_coarse)]$cell) )
+  print( length(fine_df$cell) )
 
   # Resampled national model onto fine grid
   fine_df <- cbind(
