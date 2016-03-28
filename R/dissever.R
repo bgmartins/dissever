@@ -275,7 +275,7 @@ utils::globalVariables(c(
     coarse_df$cell <- 1:nrow(coarse_df) # integer
   } else {
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
-    coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)
+    coarse_df$cell <- as.matrix( .as_data_frame_factors(ids_coarse, xy = TRUE) )
   } 
 
   print( ncell(coarse) )
