@@ -274,7 +274,7 @@ utils::globalVariables(c(
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- 1:nrow(coarse_df) # integer
   } else {
-    coarse_df <- na.exclude(.as_data_frame_factors(coarse, xy = TRUE))
+    coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- na.exclude(.as_data_frame_factors(ids_coarse, xy = FALSE))[['cell']]
   } 
 
