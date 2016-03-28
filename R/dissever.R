@@ -276,23 +276,31 @@ utils::globalVariables(c(
   } else {
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)[['cell']]
+    coarse_df$cell <- sapply(coarse_df$cell, function(x) if(is.factor(x)) { as.numeric(x) } else { x })
   } 
 
-  coarse_df <- na.exclude(coarse_df)
+  print("check 1")
   
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
   # Add coarse cell ID to fine data.frame
   fine_df[['cell']] <- as.integer(.create_lut_fine(ids_coarse, fine))
   fine_df <- na.exclude(fine_df)
+
+  print("check 2")
   
   # Resampled national model onto fine grid
   fine_df <- cbind(
     fine_df,
     .join_interpol(coarse_df = coarse_df[, c('cell', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell')
   )
+  
+  print("check 3")
+  
   coarse_df <- na.exclude(coarse_df)
   fine_df <- na.exclude(fine_df)
+  
+  print("check 4")  
   
   if (is.null(p)) {
     p = as.numeric( nrow( coarse_df ) / nrow(fine_df) )
