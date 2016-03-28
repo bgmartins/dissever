@@ -239,8 +239,9 @@ utils::globalVariables(c(re
   ){
 
   if (class(coarse) == "SpatialPolygonsDataFrame") {
-    coarse_ids <- rasterize(coarse, raster( resolution=min(res(fine)), ext=extent(coarse) ), "FIPSNO", fun='first')
-    coarse <- rasterize(coarse, raster( resolution=min(res(fine)) + 0.0001, ext=extent(coarse) ), "BIR74", fun='first')
+    minres <- min(res(fine))
+    coarse_ids <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "FIPSNO", fun='first')
+    coarse <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "BIR74", fun='first')
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
