@@ -242,15 +242,15 @@ utils::globalVariables(c(
   input_polygons = class(coarse) == "SpatialPolygonsDataFrame"
   if ( input_polygons ) {
     minres <- min(res(fine))
-    crate <- 1
-    if ( add_pycno ) { crate <- 5 }
-    pycnolayer <- raster( pycno( coarse, coarse[["BIR74"]], min(minres), converge=crate ) )
-    ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "FIPSNO", fun='first')
+    pycno_conv <- 0
+    if ( add_pycno ) { pycno_conv <- 3 }
+    pycnolayer <- raster( pycno( coarse, coarse[["BIR74"]], min(minres), converge=pycno_conv ) )
+    ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "FIPSNO", fun='first')
     names(ids_coarse) <- 'cell'
-    coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "BIR74", fun='first')
+    coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "BIR74", fun='first')
   } else if ( add_pycno ) {
       minres <- min(res(fine))
-      pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=1 ) )
+      pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=3 ) )
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
@@ -267,16 +267,20 @@ utils::globalVariables(c(
   nm_covariates <- names(fine)
 
   # Get cell numbers of the coarse grid and convert coarse data to data.frame
-#  if ( !input_polygons ) {
+  if ( !input_polygons ) {
     ids_coarse <- raster(coarse)
     ids_coarse[] <- 1:ncell(coarse)
     names(ids_coarse) <- 'cell'
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- 1:nrow(coarse_df) # integer
-#  } else {
-#    coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
-#    coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)[['cell']]
-#  }  
+  } else {
+    print("asadsdsdad")
+    
+    coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
+    print("asadsdsdaddsdadadada")
+    coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)[['cell']]
+  } 
+      print("asadsdsfdfsdfdsfsfdaddsdadadada")
   
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
