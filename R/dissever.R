@@ -235,13 +235,22 @@ utils::globalVariables(c(
     train_control_init = .default_control_init,
     train_control_iter = .default_control_iter,
     data_type = "numeric",
+    add_pycno = TRUE,
     verbose = FALSE
   ){
 
   if (class(coarse) == "SpatialPolygonsDataFrame") {
-    minres <- min(res(fine)) * 1.25
-    coarse_ids <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "FIPSNO", fun='first')
-    coarse <- rasterize(coarse, raster( resolution=minres, ext=extent(coarse) ), "BIR74", fun='first')
+    minres <- min(res(fine))
+    coarse_ids <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "FIPSNO", fun='first')
+    coarse <- rasterize(coarse, raster( resolution=minres * 1.05, ext=extent(coarse) ), "BIR74", fun='first')
+    if ( add_pycno ) {
+      pycno <- pycno( coarse, coarse[["BIR74"]], min(minres), converge=1 )
+      fine <- addLayer( fine , pycno )
+    }
+  } else if ( add_pycno ) {
+      minres <- min(res(fine))
+      pycno <- pycno( rasterToPolygons(coarse), coarse[["BIR74"]], min(minres), converge=1 )
+      fine <- addLayer( fine , pycno )
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
@@ -543,6 +552,7 @@ if(!isGeneric("dissever")) {
 #' @param train_control_init Control parameters for finding the optimal parameters of the caret model (see trainControl)
 #' @param train_control_iter Control parameters for fitting the caret model during the iteration phase (see trainControl)
 #' @param data_type a string indicating the type of data to be downscaled/disaggregated. Can be 'numeric', 'count' or 'categorical' (defaults to 'numeric')
+#' @param add_pycno controls if the results of pycnophylactic interpolation should be used as part of the fine-resolution stack of predictive covariates (TRUE or FALSE)
 #' @param verbose controls the verbosity of the output (TRUE or FALSE)
 #' @docType methods
 #' @author Brendan Malone, Pierre Roudier, Bruno Martins, João Cordeiro
