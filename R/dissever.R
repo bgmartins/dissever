@@ -245,7 +245,7 @@ utils::globalVariables(c(
     pycno_conv <- 0
     if ( add_pycno ) { pycno_conv <- 3 }
     pycnolayer <- raster( pycno( coarse, coarse[["BIR74"]], min(minres), converge=pycno_conv ) )
-    ids_coarse <- raster( rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "FIPSNO", fun='first') )
+    ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "FIPSNO", fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), "BIR74", fun='first')    
   } else if ( add_pycno ) {
@@ -275,7 +275,7 @@ utils::globalVariables(c(
     coarse_df$cell <- 1:nrow(coarse_df) # integer
   } else {
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
-    coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = FALSE)[['cell']]
+    coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)$cell
   } 
 
   print( ncell(coarse) )
