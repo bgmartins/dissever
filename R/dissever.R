@@ -236,13 +236,13 @@ utils::globalVariables(c(
     train_control_init = .default_control_init,
     train_control_iter = .default_control_iter,
     data_type = "numeric",
-    add_pycno = FALSE,
+    add_pycno = 0,
     verbose = FALSE
   ){
 
   input_polygons = class(coarse) == "SpatialPolygonsDataFrame"
 
-  if ( data_type != "count" && add_pycno ) {
+  if ( data_type != "count" && add_pycno > 0 ) {
     stop('Initialization based on pycnophylactic interpolation should only be used with count data')
   }
   
@@ -260,14 +260,14 @@ utils::globalVariables(c(
       stop('The parameter coarse_var_names should be used to provide the names for attributes corresponding to the IDs of polygons and the quantity to be downscaled')
     }
     minres <- min(res(fine))
-    if ( add_pycno ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=3 ) ) }
+    if ( add_pycno > 0 ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno ) ) }
     else { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0 ) ) }    
     ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
-  } else if ( add_pycno ) {
+  } else if ( add_pycno > 0 ) {
     minres <- min(res(fine))
-    pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=3 ) )
+    pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=add_pycno ) )
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
@@ -334,7 +334,7 @@ utils::globalVariables(c(
 
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
   if ( data_type == "count" ) { 
-     if ( add_pycno || input_polygons ) {
+     if ( add_pycno > 0 || input_polygons ) {
       y_aux = .as_data_frame_factors(pycnolayer, xy = FALSE)
      } else {
       factor = nrow(fine_df) / nrow( coarse_df )
@@ -368,7 +368,7 @@ utils::globalVariables(c(
   # Our first approximation is actually the nearest neighbour interpolation
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
-    if ( add_pycno || input_polygons ) {
+    if ( add_pycno > 0 || input_polygons ) {
      diss_result$diss = .as_data_frame_factors(pycnolayer, xy = FALSE)
     } else {
      factor = nrow(fine_df) / nrow( coarse_df )
@@ -588,7 +588,7 @@ if(!isGeneric("dissever")) {
 #' @param train_control_init Control parameters for finding the optimal parameters of the caret model (see trainControl)
 #' @param train_control_iter Control parameters for fitting the caret model during the iteration phase (see trainControl)
 #' @param data_type a string indicating the type of data to be downscaled/disaggregated. Can be 'numeric', 'count' or 'categorical' (defaults to 'numeric')
-#' @param add_pycno controls if the results of pycnophylactic interpolation should be used as initialization (TRUE or FALSE)
+#' @param add_pycno controls if the results of pycnophylactic interpolation should be used as initialization (> 0)
 #' @param verbose controls the verbosity of the output (TRUE or FALSE)
 #' @docType methods
 #' @author Brendan Malone, Pierre Roudier, Bruno Martins, João Cordeiro
