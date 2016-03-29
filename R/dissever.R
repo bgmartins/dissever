@@ -247,7 +247,7 @@ utils::globalVariables(c(
   }
   
   if ( !input_polygons && class(coarse) != "RasterLayer" ) {
-    stop('The course data should be provided as a SpatialPolygonsDataFrame or as a RasterStack')
+    stop('The course data should be provided as a SpatialPolygonsDataFrame or as a RasterLayer')
   }
   
   if ( !input_polygons && !is.null(coarse_var_names) ) {
