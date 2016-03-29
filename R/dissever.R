@@ -241,6 +241,10 @@ utils::globalVariables(c(
   ){
 
   input_polygons = class(coarse) == "SpatialPolygonsDataFrame"
+
+  if ( data_type != "count" && add_pycno ) {
+    stop('Initialization based on pycnophylactic interpolation should only be used with count data')
+  }
   
   if ( !input_polygons && class(coarse) != "RasterLayer" ) {
     stop('The course data should be provided as a SpatialPolygonsDataFrame or as a RasterStack')
@@ -566,10 +570,11 @@ if(!isGeneric("dissever")) {
 
 #' @title Spatial downscaling
 #' @name dissever
-#' @aliases dissever,RasterLayer,RasterStack-method
+#' @aliases dissever,RasterStack-method
 #' @description Performs spatial downscaling of coarse grid mapping to fine grid mapping using predictive covariates and a model fitted using the caret package.
-#' @param coarse object of class \code{"RasterLayer"}, the coarse-resolution layer that needs to be downscaled, or coarse object of class \code{"SpatialPolygonsDataFrame"} with two attributes
+#' @param coarse object of class \code{"RasterLayer"}, the coarse-resolution layer that needs to be downscaled, or alternatively an object of class \code{"SpatialPolygonsDataFrame"} with two attributes
 #' @param fine object of class \code{"RasterStack"}, the fine-resolution stack of predictive covariates
+#' @param coarse_var_names names for two attributes from the \code{"SpatialPolygonsDataFrame"} passed as the coarse object, corresponding to IDs for the different regions and to the per-region values that are to be downscaled
 #' @param method a string specifying which classification or regression model to use (via the caret package). Possible values are found using names(caret::getModelInfo()).
 #' @param p numeric, proportion of the fine map that is sampled for fitting the dissever model (between 0 and 1, defaults to the ratio between the coarse grid resolution and the fine grid resolution)
 #' @param nmax numeric maximum number of pixels selected for fitting the dissever model. It will override the number of pixels chosen by the \code{p} option if that number is over the value passed to \code{nmax}.
@@ -583,7 +588,7 @@ if(!isGeneric("dissever")) {
 #' @param train_control_init Control parameters for finding the optimal parameters of the caret model (see trainControl)
 #' @param train_control_iter Control parameters for fitting the caret model during the iteration phase (see trainControl)
 #' @param data_type a string indicating the type of data to be downscaled/disaggregated. Can be 'numeric', 'count' or 'categorical' (defaults to 'numeric')
-#' @param add_pycno controls if the results of pycnophylactic interpolation should be used as part of the fine-resolution stack of predictive covariates (TRUE or FALSE)
+#' @param add_pycno controls if the results of pycnophylactic interpolation should be used as initialization (TRUE or FALSE)
 #' @param verbose controls the verbosity of the output (TRUE or FALSE)
 #' @docType methods
 #' @author Brendan Malone, Pierre Roudier, Bruno Martins, João Cordeiro
