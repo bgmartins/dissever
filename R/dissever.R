@@ -262,6 +262,7 @@ utils::globalVariables(c(
     minres <- min(res(fine))
     if ( add_pycno > 0 ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno ) ) }
     else { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0 ) ) }    
+    pycnolayer <- rasterize(pycnolayer, raster( resolution=minres * 1.01, ext=extent(coarse) ), names(pycnolayer)[1], fun='first')
     ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
