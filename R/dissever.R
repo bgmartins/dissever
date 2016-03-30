@@ -336,8 +336,9 @@ utils::globalVariables(c(
   if ( data_type == "count" ) { 
      if ( add_pycno > 0 || input_polygons ) {
       print ( length( y_aux ) )
-      y_aux = .as_data_frame_factors(pycnolayer, xy = FALSE)[,1]
-      y_aux = as.numeric( na.exclude(y_aux) )
+      print ( y_aux )
+      y_aux = .as_data_frame_factors(pycnolayer, xy = TRUE)
+      y_aux = as.numeric( na.exclude(y_aux[,3]) )
       print ( length( y_aux ) )
      } else {
       factor = nrow(fine_df) / nrow( coarse_df )
@@ -373,7 +374,7 @@ utils::globalVariables(c(
   if ( data_type == "count" ) {
     if ( add_pycno > 0 || input_polygons ) {
      print ( length( diss_result$diss ) )
-     diss_result$diss = .as_data_frame_factors(pycnolayer, xy = FALSE)[,1]
+     diss_result$diss = .as_data_frame_factors(pycnolayer, xy = TRUE)[,3]
      diss_result$diss = as.numeric( na.exclude(diss_result$diss) )
      print ( length( diss_result$diss ) )
     } else {
