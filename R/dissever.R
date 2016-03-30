@@ -305,9 +305,9 @@ utils::globalVariables(c(
   ids_coarse2[] <- 1:ncell(coarse)
   fine_df[['cell2']] <- as.integer(.create_lut_fine(ids_coarse2, fine))
   if ( add_pycno > 0 || ( input_polygons && data_type == "count") ) {
-    fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer, fine))
+    fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer[,1], fine))
   } else {
-    fine_df[['pycnolayer']] <- 1:nrow(fine_df)
+    fine_df[['pycnolayer']] <- 0
   }
   fine_df <- na.exclude(fine_df)
 
@@ -366,19 +366,17 @@ utils::globalVariables(c(
   perf <- matrix(ncol = 3, nrow = 0, dimnames = list(NULL,c("lower_error", "error", "upper_error")))
 
   # Initiate dissever result data.frame
-  diss_result <- fine_df[, c('x', 'y', 'cell', 'cell2', 'pycnolayer', nm_coarse)]
+  diss_result <- fine_df[, c('x', 'y', 'cell', 'cell2', nm_coarse)]
   # Our first approximation is actually the nearest neighbour interpolation
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
     if ( add_pycno > 0 || input_polygons ) {
-     diss_result$diss <- fine_df[['pycnolayer', drop = TRUE]] * 1.0
+     diss_result$diss <- fine_df[['pycnolayer']]
     } else {
      factor = nrow(fine_df) / nrow( coarse_df )
      diss_result$diss = diss_result$diss / as.numeric( factor )
     }
   }
-  
-  print( names(diss_result) )
 
   # Initiate dissever results data.frame aggregated back to coarse grid
   diss_coarse <- coarse_df
