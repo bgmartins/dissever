@@ -374,8 +374,9 @@ utils::globalVariables(c(
     if ( add_pycno > 0 || input_polygons ) {
      print( length (diss_result$diss) )
      print( length (pycnolayer) )
-     print( length (fine_df) ) 
-     diss_result$diss = pycnolayer
+     print( length (fine_df$cell) ) 
+     print( length (y_aux) )
+     diss_result$diss = .create_lut_fine(pycnolayer,diss_result)
     } else {
      factor = nrow(fine_df) / nrow( coarse_df )
      diss_result$diss = diss_result$diss / as.numeric( factor )
