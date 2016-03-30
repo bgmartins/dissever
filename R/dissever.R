@@ -306,6 +306,7 @@ utils::globalVariables(c(
   ids_coarse2[] <- 1:ncell(coarse)
   fine_df[['cell2']] <- as.integer(.create_lut_fine(ids_coarse2, fine))
   fine_df <- na.exclude(fine_df)
+  fine <- na.exclude(fine)
   if ( add_pycno > 0 || ( input_polygons && data_type == "count") ) {
     pycnolayer <- na.exclude( as.integer( .create_lut_fine(pycnolayer, fine) ) )
   }
@@ -375,8 +376,7 @@ utils::globalVariables(c(
      print( length (diss_result$diss) )
      print( length (pycnolayer) )
      print( length (fine_df$cell) ) 
-     print( length (y_aux) )
-     diss_result$diss = .create_lut_fine(pycnolayer,diss_result)
+     diss_result$diss = .create_lut_fine(pycnolayer,fine_df)
     } else {
      factor = nrow(fine_df) / nrow( coarse_df )
      diss_result$diss = diss_result$diss / as.numeric( factor )
