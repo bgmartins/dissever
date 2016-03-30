@@ -265,7 +265,7 @@ utils::globalVariables(c(
     ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
-    pycnolayer <- projectRaster(pycnolayer, coarse, method='ngb')
+    pycnolayer <- as.integer(.create_lut_fine(pycnolayer, fine))
   } else if ( add_pycno > 0 ) {
     minres <- min(res(fine))
     pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=add_pycno ) )
@@ -337,8 +337,7 @@ utils::globalVariables(c(
   if ( data_type == "count" ) { 
      if ( add_pycno > 0 || input_polygons ) {
       print ( length( y_aux ) )
-      y_aux = .as_data_frame_factors(pycnolayer, xy = TRUE)
-      y_aux = as.numeric( y_aux[,3] )
+      y_aux = as.numeric( pycnolayer[,1] )
       print ( length( y_aux ) )
      } else {
       factor = nrow(fine_df) / nrow( coarse_df )
