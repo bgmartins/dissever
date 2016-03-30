@@ -309,10 +309,7 @@ utils::globalVariables(c(
     fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer, fine ))
   }
   fine_df <- na.exclude(fine_df)
-  
-  print ( length(fine_df$cell) )
-  print ( length(fine_df$pycnolayer) )
-  
+
   # Resampled national model onto fine grid
   fine_df <- cbind(
     fine_df,
@@ -378,7 +375,7 @@ utils::globalVariables(c(
      print( length (diss_result$diss) )
      print( length (fine_df[["pycnolayer"]]) )
      print( length (fine_df$cell) ) 
-     diss_result$diss = fine_df[["pycnolayer"]]
+     diss_result$diss = as.numeric( fine_df$pycnolayer )
     } else {
      factor = nrow(fine_df) / nrow( coarse_df )
      diss_result$diss = diss_result$diss / as.numeric( factor )
