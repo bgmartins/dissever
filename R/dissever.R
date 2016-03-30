@@ -265,10 +265,11 @@ utils::globalVariables(c(
     ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
-    pycnolayer <- as.integer(.create_lut_fine(pycnolayer, fine))
+    pycnolayer <- na.exclude( as.integer( .create_lut_fine(pycnolayer, fine) ) )
   } else if ( add_pycno > 0 ) {
     minres <- min(res(fine))
     pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=add_pycno ) )
+    pycnolayer <- na.exclude( as.integer( .create_lut_fine(pycnolayer, fine) ) )
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
