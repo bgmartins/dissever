@@ -290,11 +290,13 @@ utils::globalVariables(c(
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- 1:nrow(coarse_df)
     coarse_df$cell2 <- coarse_df$cell
+    coarse_df$pycnolayer <- coarse_df$cell
   } else {
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)[['cell']]
     coarse_df$cell <- sapply(coarse_df$cell, function(x) if(is.factor(x)) { as.numeric(x) } else { x })
     coarse_df$cell2 <- 1:nrow(coarse_df)
+    coarse_df$pycnolayer <- coarse_df$cell
   } 
 
   # Convert fine data to data.frame
@@ -307,14 +309,14 @@ utils::globalVariables(c(
   if ( add_pycno > 0 || ( input_polygons && data_type == "count") ) {
     fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer, fine))
   } else {
-    fine_df[['pycnolayer']] <- 0
+    fine_df[['pycnolayer']] <- fine_df[['cell']]
   }
   fine_df <- na.exclude(fine_df)
 
   # Resampled national model onto fine grid
   fine_df <- cbind(
     fine_df,
-    .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
+    .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', 'pycnolayer', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
   )
   
   coarse_df <- na.exclude(coarse_df)
