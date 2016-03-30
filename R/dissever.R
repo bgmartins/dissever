@@ -266,7 +266,7 @@ utils::globalVariables(c(
     coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
   } else if ( add_pycno > 0 ) {
     minres <- min(res(fine))
-    pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=add_pycno ) )
+    pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.05, converge=add_pycno ) )
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
@@ -290,13 +290,11 @@ utils::globalVariables(c(
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- 1:nrow(coarse_df)
     coarse_df$cell2 <- coarse_df$cell
-    coarse_df$pycnolayer <- 1:nrow(coarse_df)
   } else {
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)[['cell']]
     coarse_df$cell <- sapply(coarse_df$cell, function(x) if(is.factor(x)) { as.numeric(x) } else { x })
     coarse_df$cell2 <- 1:nrow(coarse_df)
-    coarse_df$pycnolayer <- 1:nrow(coarse_df)
   } 
 
   # Convert fine data to data.frame
@@ -316,22 +314,20 @@ utils::globalVariables(c(
   # Resampled national model onto fine grid
   fine_df <- cbind(
     fine_df,
-    .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', 'pycnolayer', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
+    .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
   )
+  
+  print ( names(fine_df) )
   
   coarse_df <- na.exclude(coarse_df)
   fine_df <- na.exclude(fine_df)
   
-  if (is.null(p)) {
-    p = as.numeric( nrow( coarse_df ) / nrow(fine_df) )
-  }
+  if (is.null(p)) { p = as.numeric( nrow( coarse_df ) / nrow(fine_df) ) }
 
   # Sub-sample for modelling
   n_spl <- ceiling(nrow(fine_df) * p) # Number of cells to sample
 
-  if (!is.null(nmax) && nmax > 0) {
-    n_spl <- min(n_spl, nmax)
-  }
+  if (!is.null(nmax) && nmax > 0) { n_spl <- min(n_spl, nmax) }
   
   id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
 
@@ -375,12 +371,14 @@ utils::globalVariables(c(
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
     if ( add_pycno > 0 || input_polygons ) {
-#     diss_result$diss <- fine_df[['pycnolayer']]
+     diss_result$diss <- fine_df[['pycnolayer', drop = TRUE]] * 1.0
     } else {
      factor = nrow(fine_df) / nrow( coarse_df )
      diss_result$diss = diss_result$diss / as.numeric( factor )
     }
   }
+  
+  print( names(diss_result) )
 
   # Initiate dissever results data.frame aggregated back to coarse grid
   diss_coarse <- coarse_df
