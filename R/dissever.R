@@ -305,12 +305,14 @@ utils::globalVariables(c(
   ids_coarse2[] <- 1:ncell(coarse)
   fine_df[['cell2']] <- as.integer(.create_lut_fine(ids_coarse2, fine))
   if ( add_pycno > 0 || ( input_polygons && data_type == "count") ) {
-    fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer[,1], fine))
+    fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer, fine))
   } else {
     fine_df[['pycnolayer']] <- 0
   }
   fine_df <- na.exclude(fine_df)
 
+  print ( names(fine_df) )
+  
   # Resampled national model onto fine grid
   fine_df <- cbind(
     fine_df,
