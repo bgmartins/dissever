@@ -261,7 +261,7 @@ utils::globalVariables(c(
     }
     minres <- min(res(fine))
     if ( add_pycno > 0 ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno ) ) }
-    else { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0 ) ) }    
+    else if ( data_type == "count" ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0 ) ) }    
     ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
@@ -306,7 +306,7 @@ utils::globalVariables(c(
   ids_coarse2[] <- 1:ncell(coarse)
   fine_df[['cell2']] <- as.integer(.create_lut_fine(ids_coarse2, fine))
   fine_df <- na.exclude(fine_df)
-  if ( add_pycno > 0 || input_polygons ) {
+  if ( add_pycno > 0 || ( input_polygons && data_type == "count") ) {
     pycnolayer <- na.exclude( as.integer( .create_lut_fine(pycnolayer, fine) ) )
   }
 
@@ -372,6 +372,9 @@ utils::globalVariables(c(
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
     if ( add_pycno > 0 || input_polygons ) {
+     print( length (diss_result$diss) )
+     print( length (pycnolayer) )
+     print( length (fine_df) ) 
      diss_result$diss = pycnolayer
     } else {
      factor = nrow(fine_df) / nrow( coarse_df )
