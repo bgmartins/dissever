@@ -259,14 +259,14 @@ utils::globalVariables(c(
       stop('The parameter coarse_var_names should be used to provide the names for attributes corresponding to the IDs of polygons and the quantity to be downscaled')
     }
     minres <- min(res(fine))
-    if ( add_pycno > 0 ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno ) ) }
-    else if ( data_type == "count" ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0 ) ) }    
+    if ( add_pycno > 0 ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno, verbose=FALSE ) ) }
+    else if ( data_type == "count" ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0, verbose=FALSE ) ) }    
     ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
   } else if ( add_pycno > 0 ) {
     minres <- min(res(fine))
-    pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.05, converge=add_pycno ) )
+    pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.05, converge=add_pycno, verbose=FALSE ) )
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
