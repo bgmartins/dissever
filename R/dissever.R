@@ -265,11 +265,9 @@ utils::globalVariables(c(
     ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
-    pycnolayer <- na.exclude( as.integer( .create_lut_fine(pycnolayer, fine) ) )
   } else if ( add_pycno > 0 ) {
     minres <- min(res(fine))
     pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.1, converge=add_pycno ) )
-    pycnolayer <- na.exclude( as.integer( .create_lut_fine(pycnolayer, fine) ) )
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
@@ -308,6 +306,9 @@ utils::globalVariables(c(
   ids_coarse2[] <- 1:ncell(coarse)
   fine_df[['cell2']] <- as.integer(.create_lut_fine(ids_coarse2, fine))
   fine_df <- na.exclude(fine_df)
+  
+  pycnolayer <- na.exclude( as.integer( .create_lut_fine(pycnolayer, fine) ) )
+
 
   # Resampled national model onto fine grid
   fine_df <- cbind(
@@ -338,9 +339,8 @@ utils::globalVariables(c(
   if ( data_type == "count" ) { 
      if ( add_pycno > 0 || input_polygons ) {
       print ( length( y_aux ) )
-      print ( length( pycnolayer ) )      
+      print ( length( pycnolayer[id_spl, 1, drop = TRUE]  ) )      
       y_aux = as.numeric( pycnolayer )
-      print ( length( y_aux ) )
      } else {
       factor = nrow(fine_df) / nrow( coarse_df )
       y_aux = y_aux / as.numeric( factor )
