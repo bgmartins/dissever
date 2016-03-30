@@ -311,9 +311,11 @@ utils::globalVariables(c(
   }
   fine_df <- na.exclude(fine_df)
 
+  print ( names(fine_df) )
+  
   # Resampled national model onto fine grid
   fine_df <- cbind(
-    fine_df[, c('cell', 'cell2', nm_covariates)],
+    fine_df[, c('x', 'y', 'cell', 'cell2', nm_covariates)],
     .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
   )
   
