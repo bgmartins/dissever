@@ -125,7 +125,6 @@ utils::globalVariables(c(
 .get_split_idx <- function(n, p) sort(1:n %% p)
 
 # Generates prediction intervals using bootstraping
-#
 .bootstrap_ci <- function(fit, fine_df, level = 0.9, n = 50L, data_type="numeric" ) {
 
   # training data
@@ -169,12 +168,12 @@ utils::globalVariables(c(
     # if level is a function
   } else if (is.function(level)) {
     if ( data_type == "categorical" ) {
-     res <- data.frame(
+      res <- data.frame(
       mean = aaply(boot_samples$t, 2, median),
       uncert = aaply(boot_samples$t, 2, level)
      )
     } else {
-     res <- data.frame(
+      res <- data.frame(
       mean = aaply(boot_samples$t, 2, mean),
       uncert = aaply(boot_samples$t, 2, level)
      )
@@ -307,13 +306,15 @@ utils::globalVariables(c(
   fine_df[['cell2']] <- as.integer(.create_lut_fine(ids_coarse2, fine))
   if ( add_pycno > 0 || ( input_polygons && data_type == "count") ) {
     fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer, fine))
+  } else {
+    fine_df[['pycnolayer']] <- 0
   }
   fine_df <- na.exclude(fine_df)
 
   # Resampled national model onto fine grid
   fine_df <- cbind(
     fine_df,
-    .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
+    .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', 'pycnolayer', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
   )
   
   coarse_df <- na.exclude(coarse_df)
@@ -338,7 +339,7 @@ utils::globalVariables(c(
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
   if ( data_type == "count" ) { 
      if ( add_pycno > 0 || input_polygons ) {
-#      y_aux = fine_df[id_spl, "pycnolayer", drop = TRUE]
+      y_aux = fine_df[id_spl, 'pycnolayer', drop = TRUE]
      } else {
       factor = nrow(fine_df) / nrow( coarse_df )
       y_aux = y_aux / as.numeric( factor )
@@ -367,12 +368,12 @@ utils::globalVariables(c(
   perf <- matrix(ncol = 3, nrow = 0, dimnames = list(NULL,c("lower_error", "error", "upper_error")))
 
   # Initiate dissever result data.frame
-  diss_result <- fine_df[, c('x', 'y', 'cell', 'cell2', nm_coarse)]
+  diss_result <- fine_df[, c('x', 'y', 'cell', 'cell2', 'pycnolayer', nm_coarse)]
   # Our first approximation is actually the nearest neighbour interpolation
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
     if ( add_pycno > 0 || input_polygons ) {
-#     diss_result$diss <- fine_df[["pycnolayer"]]
+     diss_result$diss <- fine_df[['pycnolayer']]
     } else {
      factor = nrow(fine_df) / nrow( coarse_df )
      diss_result$diss = diss_result$diss / as.numeric( factor )
