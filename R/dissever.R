@@ -423,6 +423,7 @@ utils::globalVariables(c(
 
     # Update dissever predictions on fine grid
     diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
+    if (type == 'count') { diss_result$diss[diss_result$diss < 0.0] <- 0 }
 
     if (verbose) message('| -- computing aggregates of predictions on coarse grid')
 
