@@ -338,9 +338,7 @@ utils::globalVariables(c(
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
   if ( data_type == "count" ) { 
      if ( add_pycno > 0 || input_polygons ) {
-      print ( length( y_aux ) )
-      print ( length( pycnolayer[id_spl, drop = TRUE]  ) )      
-      y_aux = ycnolayer[id_spl, 1, drop = TRUE]
+      y_aux = pycnolayer[id_spl, drop = TRUE]
      } else {
       factor = nrow(fine_df) / nrow( coarse_df )
       y_aux = y_aux / as.numeric( factor )
@@ -374,9 +372,7 @@ utils::globalVariables(c(
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
     if ( add_pycno > 0 || input_polygons ) {
-     print ( length( diss_result$diss ) )
-     diss_result$diss = as.numeric(pycnolayer)
-     print ( length( diss_result$diss ) )
+     diss_result$diss = pycnolayer
     } else {
      factor = nrow(fine_df) / nrow( coarse_df )
      diss_result$diss = diss_result$diss / as.numeric( factor )
