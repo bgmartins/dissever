@@ -313,8 +313,8 @@ utils::globalVariables(c(
 
   # Resampled national model onto fine grid
   fine_df <- cbind(
-    fine_df,
-    .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = c(nm_coarse,'pycnolayer'), by = 'cell2')
+    fine_df[, c('cell', 'cell2', nm_covariates)],
+    .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
   )
   
   print ( names(fine_df) )
