@@ -337,9 +337,8 @@ utils::globalVariables(c(
   if ( data_type == "count" ) { 
      if ( add_pycno > 0 || input_polygons ) {
       print ( length( y_aux ) )
-      print ( y_aux )
       y_aux = .as_data_frame_factors(pycnolayer, xy = TRUE)
-      y_aux = as.numeric( na.exclude(y_aux[,3]) )
+      y_aux = as.numeric( na.exclude( y_aux[,3] ) )
       print ( length( y_aux ) )
      } else {
       factor = nrow(fine_df) / nrow( coarse_df )
