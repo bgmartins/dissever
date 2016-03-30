@@ -372,10 +372,7 @@ utils::globalVariables(c(
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
     if ( add_pycno > 0 || input_polygons ) {
-     print( length (diss_result$diss) )
-     print( length (fine_df[["pycnolayer"]]) )
-     print( length (fine_df$cell) ) 
-     diss_result$diss = as.numeric( fine_df$pycnolayer )
+     diss_result$diss <- fine_df[,'pycnolayer']
     } else {
      factor = nrow(fine_df) / nrow( coarse_df )
      diss_result$diss = diss_result$diss / as.numeric( factor )
