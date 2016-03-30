@@ -306,7 +306,7 @@ utils::globalVariables(c(
   ids_coarse2[] <- 1:ncell(coarse)
   fine_df[['cell2']] <- as.integer(.create_lut_fine(ids_coarse2, fine))
   if ( add_pycno > 0 || ( input_polygons && data_type == "count") ) {
-#    fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer, fine))
+    fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer, fine))
   }
   fine_df <- na.exclude(fine_df)
 
@@ -335,7 +335,7 @@ utils::globalVariables(c(
   # Compute initial model
   if (verbose) message('Selecting best model parameters')
 
-  y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
+  y_aux = fine_df[id_spl, nm_coarse, 'pycnolayer', drop = TRUE]  
   if ( data_type == "count" ) { 
      if ( add_pycno > 0 || input_polygons ) {
 #      y_aux = fine_df[id_spl, "pycnolayer", drop = TRUE]
