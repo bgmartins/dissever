@@ -494,10 +494,12 @@ utils::globalVariables(c(
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
 
   # Create Raster result
+  map <- .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
+  if (data_type == 'count') { map[map < 0.0] <- 0 }
   map <- rasterFromXYZ(
     data.frame(
       diss_result[, c('x', 'y')],
-      diss = .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
+      diss = map
     ),
     res = res(fine),
     crs = projection(fine)
