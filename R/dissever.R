@@ -113,8 +113,8 @@ utils::globalVariables(c(
       y = y_aux, # in this case train needs a vector
       method = method,
       trControl = control,
-      tuneGrid  = tune_grid,
-      preProc=c("center", "scale")
+      # preProc=c("center", "scale"),
+      tuneGrid  = tune_grid 
     )
   # }
 
