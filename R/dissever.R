@@ -259,6 +259,9 @@ utils::globalVariables(c(
     if ( length(coarse_var_names) > 2 ) {
       stop('The parameter coarse_var_names should be used to provide the names for attributes corresponding to the IDs of polygons and the quantity to be downscaled')
     }
+    if(nrow(coarse[which(coarse[[coarse_var_names[2]]] == 0),]) != 0) {
+      coarse[[coarse_var_names[2]]] = coarse[[coarse_var_names[2]]] + 0.0001
+    }
     minres <- min(res(fine))
     if ( add_pycno > 0 ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno, verbose=FALSE ) ) }
     else if ( data_type == "count" ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0, verbose=FALSE ) ) }    
