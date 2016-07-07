@@ -345,23 +345,51 @@ utils::globalVariables(c(
       y_aux = y_aux / as.numeric( factor )
      }
   }
-  fit <- .update_model(
-    x = fine_df[id_spl, nm_covariates],
-    y = y_aux,
-    method = method,
-    control = train_control_init,
-    tune_grid = tune_grid,
-    data_type = data_type
-  )
+  
+  lon_spl = list()
+  lat_spl = list()
+  lon = list()
+  lat = list()
+  if(method == "gwr") {
+  	if (data_type == "count" || data_type == "numeric") {
+  	  lon_spl = fine_df[id_spl, 'x']
+      lat_spl = fine_df[id_spl, 'y']
+      lon = fine_df$x
+      lat = fine_df$y
 
-  # Getting best setof params
-  best_params <- fit$bestTune
+      varaux = fine_df[id_spl, nm_covariates]
+      varr = y_aux
+      datagwr = data.frame(varr, varaux, lat_spl, lon_spl)
+      coordinates = as.matrix(data.frame(datagwr$lat_spl, datagwr$lon_spl))
 
-  if (verbose) {
-    best_params_str <- paste(
-      lapply(names(best_params), function(x) paste(x, " = ", best_params[[x]], sep = "")),
-      collapse = ", ")
-    message("Parameters retained: ", best_params_str)
+      form = as.formula(paste("varr~",paste(names(varaux), collapse="+")))
+      #baux <- gwr.sel(form, data = datagwr, coords = coordinates, longlat=TRUE, adapt=TRUE)
+      #print(baux)
+
+    } else {
+  	  # Stop if data_type is not "count" or "numeric"
+	  stop('Data type should be count or numeric, when performing geographically weighted regression')
+  	}
+
+  } else {
+    fit <- .update_model(
+      x = fine_df[id_spl, nm_covariates],
+      y = y_aux,
+      method = method,
+      control = train_control_init,
+      tune_grid = tune_grid,
+      data_type = data_type
+    )
+
+    # Getting best setof params
+    best_params <- fit$bestTune
+  
+    if (verbose) {
+      best_params_str <- paste(
+        lapply(names(best_params), function(x) paste(x, " = ", best_params[[x]], sep = "")),
+        collapse = ", ")
+      message("Parameters retained: ", best_params_str)
+    }
   }
 
   # Initiate matrix to store performance of disseveration
@@ -369,6 +397,7 @@ utils::globalVariables(c(
 
   # Initiate dissever result data.frame
   diss_result <- fine_df[, c('x', 'y', 'cell', 'cell2', nm_coarse)]
+  
   # Our first approximation is actually the nearest neighbour interpolation
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
@@ -416,19 +445,41 @@ utils::globalVariables(c(
     # Sampling points
     # id_spl <- sample(1:nrow(fine_df), size = n_spl)
 
-    fit <- .update_model(
-      x = fine_df[id_spl, nm_covariates],
-      y = diss_result[id_spl, 'diss', drop = TRUE],
-      method = method,
-      control = train_control_iter,
-      tune_grid = best_params,
-      data_type = data_type
-    )
+    if(method != "gwr") {
+      fit <- .update_model(
+        x = fine_df[id_spl, nm_covariates],
+        y = diss_result[id_spl, 'diss', drop = TRUE],
+        method = method,
+        control = train_control_iter,
+        tune_grid = best_params,
+        data_type = data_type
+      )
+    }
 
     if (verbose) message('| -- updating predictions')
 
     # Update dissever predictions on fine grid
-    diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
+    if(method == "gwr") {
+      varaux = fine_df[id_spl, nm_covariates]
+      varr = diss_result[id_spl, 'diss', drop = TRUE]
+
+      datagwr = data.frame(varr, varaux, lat_spl, lon_spl)
+      coordinates = as.matrix(data.frame(datagwr$lat_spl, datagwr$lon_spl))
+
+      varaux = fine_df[nm_covariates]
+      lon_res = lon
+      lat_res = lat
+
+      unkcoordinates = SpatialPointsDataFrame(data.frame(lat_res, lon_res), data.frame(varaux), proj4string = CRS("+proj=longlat +datum=WGS84"))
+      
+      form = as.formula(paste("varr~",paste(names(varaux), collapse="+")))
+	    model = gwr(form, data = datagwr, coords = coordinates, longlat = TRUE, adapt = 0.5, fit.points = unkcoordinates, predictions = TRUE)
+      diss_result$diss = model$SDF$pred
+
+    } else {
+	    diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
+    }
+
     if (data_type == 'count') { diss_result$diss[diss_result$diss < 0.0] <- 0 }
 
     if (verbose) message('| -- computing aggregates of predictions on coarse grid')
@@ -476,9 +527,14 @@ utils::globalVariables(c(
 
     # Choose whether we retain the model or not
     if (error < best_fit){
-      best_model <- fit
       best_fit <- error
       best_iteration <- k
+
+      if(method == "gwr") {
+        best_model <- diss_result$diss
+      } else {
+        best_model <- fit
+      }
     }
 
     # We only test improvement if more than 5 iterations
@@ -500,7 +556,12 @@ utils::globalVariables(c(
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
 
   # Create Raster result
-  map <- .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
+  if(method == "gwr") {
+    map <- best_model
+  } else {
+    map <- .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
+  }
+  
   if (data_type == 'count') { map[map < 0.0] <- 0 }
   map <- rasterFromXYZ(
     data.frame(
@@ -511,12 +572,20 @@ utils::globalVariables(c(
     crs = projection(fine)
   )
 
-  res <- list(
-    fit = fit,
-    map = map,
-    perf = data.frame(perf)
-  )
-
+  if(method == "gwr") {
+    res <- list(
+      fit = "Not valid for GWR",
+      map = map,
+      perf = data.frame(perf)
+    )
+  } else {
+    res <- list(
+      fit = fit,
+      map = map,
+      perf = data.frame(perf)
+    )
+  }
+  
   class(res) <- c(class(res), 'dissever')
 
   return(res)
