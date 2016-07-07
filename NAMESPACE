@@ -32,6 +32,10 @@ importFrom(magrittr, "%>%")
 
 importFrom(viridis, viridis)
 
+importFrom(spgwr, gwr)
+importFrom(spgwr, gwr.sel)
+importFrom(spgwr, ggwr.sel)
+
 export(print.dissever)
 S3method(print, dissever)
 export(summary.dissever)
