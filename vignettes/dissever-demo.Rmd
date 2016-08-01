@@ -50,8 +50,8 @@ It is simple to switch between regression/classification methods using the `meth
 But first let's setup some parameters:
 ```{r params}
 min_iter <- 5 # Minimum number of iterations
-max_iter <- 15 # Maximum number of iterations
-p_train <- 0.1 # Subsampling of the initial data
+max_iter <- 10 # Maximum number of iterations
+p_train <- 0.025 # Subsampling of the initial data
 ```
 
 We can then launch the different disseveration procedures:

@@ -51,7 +51,7 @@ utils::globalVariables(c(
 
 .join_interpol <- function(coarse_df, fine_df, attr, by = 'cell'){
   # Nearest-neighbour interpolation as an inner SQL join
-  inner_join(fine_df, coarse_df , by = by) %>%
+  left_join(fine_df, coarse_df , by = by) %>%
     select(matches(attr))
 }
 
@@ -187,7 +187,24 @@ utils::globalVariables(c(
   as.numeric( res )
 }
 
-.predict_map <- function(fit, data, split = NULL, boot = NULL, level = 0.9, data_type = "numeric" ) {
+.generate_ci <- function(object, covariates, level = 0.9, n = 50L) {
+  fine_df <- na.exclude(.as_data_frame_factors(covariates, xy = TRUE))
+
+  b <- .bootstrap_ci(object$fit, fine_df, level = 0.9, n = 50L)
+
+  res <- rasterFromXYZ(
+    data.frame(
+      fine_df[, 1:2],
+      b
+    ),
+    res = res(covariates),
+    crs = projection(covariates)
+  )
+
+  res
+}
+
+.predict_map <- function(fit, data, split = NULL, boot = NULL, level = 0.9) {
   if (.has_parallel_backend()) {
     # Get number of registered workers
     n_workers <- length(unique(split))
@@ -276,8 +293,8 @@ utils::globalVariables(c(
   }
 
   # Stop if resolution of covariates is not higher than resolution of coarse data
-  if (min(res(fine)) > min(res(coarse))) {
-    stop('Resolution of fine data should be higer than resolution of coarse data')
+  if (min(res(fine)) >= min(res(coarse))) {
+    stop('Resolution of fine data should be higher than resolution of coarse data')
   }
 
   if (!(data_type == "numeric" || data_type=="count" || data_type=="categorical")) {
@@ -329,8 +346,10 @@ utils::globalVariables(c(
   # Sub-sample for modelling
   n_spl <- ceiling(nrow(fine_df) * p) # Number of cells to sample
 
-  if (!is.null(nmax) && nmax > 0) { n_spl <- min(n_spl, nmax) }
-  
+  if (!is.null(nmax) && nmax > 0) {
+    n_spl <- min(n_spl, nmax)
+  }
+
   id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
 
   # Compute initial model
@@ -538,7 +557,7 @@ utils::globalVariables(c(
     }
 
     # We only test improvement if more than 5 iterations
-    if (k >= min_iter) {
+    if (k >= min_iter & k >= 3) {
 
       # Computing stop criterion
       stop_criterion <- mean(
@@ -622,7 +641,7 @@ plot.dissever <- function(x, type = 'map', ...) {
 #' @title Prints the performance of the dissever procedure
 #' @description Prints the performance of the model used to do the dissever procedure.
 #' @param x object of class \code{dissever}, output from the \code{dissever} function
-#' #' @param ... Additional arguments passed to print
+#' @param ... Additional arguments passed to print
 #' @author Pierre Roudier
 print.dissever <- function(x, ...) {
   print(x$fit, ...)
@@ -632,11 +651,52 @@ print.dissever <- function(x, ...) {
 #' @title Prints summary of the model used in the dissever procedure
 #' @description Prints summary of the model used in the dissever procedure.
 #' @param object object of class \code{dissever}, output from the \code{dissever} function
-#' #' @param ... Additional arguments passed to summary
+#' @param ... Additional arguments passed to summary
 #' @author Pierre Roudier
 summary.dissever <- function(object, ...) {
   summary(object$fit, ...)
 }
+
+if(!isGeneric("generate_ci")) {
+  setGeneric("generate_ci", function(object, covariates, ...) {
+    standardGeneric("generate_ci")
+  })
+}
+
+#' @name generate_ci
+#' @aliases generate_ci,list,RasterStack-method
+#' @title Confidence intervals using bootstraping
+#' @description Generates confidence intervals of a dissever output using bootstraping
+#' @param object object of class \code{dissever}, output from the \code{dissever} function
+#' @param covariates object of class \code{"RasterStack"}, the fine-resolution stack of predictive covariates used to generate the dissever output
+#' @param level If this is a numeric value, it is used to derive confidence intervals using quantiles. If it is a function, it is used to derive the uncertainty using this function.
+#' @param n the number of bootstrap replicates used to derive the confidence intervals
+#' @docType methods
+#' @author Pierre Roudier
+#' @examples
+#' # Load the Edgeroi dataset (see ?edgeroi)
+#' data(edgeroi)
+#'
+#' # Create a dissever output
+#' diss <- dissever(
+#'   coarse = edgeroi$carbon,
+#'   fine = edgeroi$predictors,
+#'   method = "lm",
+#'   min_iter = 5, max_iter = 10,
+#'   p = 0.05
+#' )
+#'
+#' # Generate the confidence intervals
+#' \dontrun{
+#' ci <- generate_ci(diss, edgeroi$predictors, n = 5)
+#'
+#' plot(ci)
+#' }
+setMethod(
+  'generate_ci',
+  signature(object = "list", covariates = "RasterStack"),
+  .generate_ci
+)
 
 if(!isGeneric("dissever")) {
   setGeneric("dissever", function(coarse, fine, ...) {
