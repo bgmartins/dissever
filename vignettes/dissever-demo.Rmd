@@ -15,7 +15,7 @@ library(devtools)
 install_github("dissever", username="bgmartins")
 ```
 
-Out examples use the following libraries:
+Our examples use the following libraries:
 ```{r libs, results='hide', message=FALSE}
 library(dissever)
 
