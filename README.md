@@ -22,4 +22,4 @@ Then to install `dissever`:
 devtools::install_github('bgmartins/dissever')
 ```
 
-
+A set of [usage examples](https://github.com/bgmartins/dissever/blob/master/vignettes/dissever-demo.Rmd) is also provided in the accompanying vignette.
