@@ -204,7 +204,7 @@ utils::globalVariables(c(
   res
 }
 
-.predict_map <- function(fit, data, split = NULL, boot = NULL, level = 0.9) {
+.predict_map <- function(fit, data, split = NULL, boot = NULL, level = 0.9, data_type="numeric") {
   if (.has_parallel_backend()) {
     # Get number of registered workers
     n_workers <- length(unique(split))
