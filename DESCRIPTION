@@ -23,7 +23,8 @@ Imports:
     foreach,
     boot,
     magrittr,
-    viridis
+    viridis,
+    spgwr
 Suggests:
     knitr,
     rmarkdown
