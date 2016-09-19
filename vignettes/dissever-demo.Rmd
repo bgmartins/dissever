@@ -37,13 +37,15 @@ plot(edgeroi$predictors, col = viridis(100))
 
 ## Example
 
-In this section, we will dissever the sample dataset  with the available environmental covariates, using 4 different learning methods: 
+In this section, we will dissever the sample datasetwith the available environmental covariates, using 6 different learning methods: 
 
 * Random Forest (`"rf"`)
 * Cubist (`"cubist"`)
 * Generalized Additive Model using Splines (`"gamSpline"`)
 * Linear Model (`"lm"`)
 * Multivariate Adaptive Regression Spline (`"earth"`)
+* Geographically Weighted Regression (`"gwr"`)
+* Robust Regression (`"rlm"`)
 
 It is simple to switch between regression/classification methods using the `method` option of `dissever`.
 
@@ -117,6 +119,16 @@ res_gwr <- dissever(
   max_iter = max_iter
 )
 
+# Robust Regression
+res_rlm <- dissever(
+  coarse = edgeroi$carbon, 
+  fine = edgeroi$predictors, 
+  method = "rlm", 
+  p = p_train, 
+  min_iter = min_iter,
+  max_iter = max_iter
+)
+
 # Random Forest - example for downscaling categorical data
 # First we reclassify the numeric raster into 4 classes
 m <- cellStats(edgeroi$carbon, stat=fivenum) 
@@ -156,6 +168,7 @@ plot(res_gam, type = 'map', main = "GAM")
 plot(res_lm, type = 'map', main = "Linear Model")
 plot(res_earth, type = 'map', main = "MARS")
 plot(res_gwr, type = 'map', main = "Geographically Weighted Regression")
+plot(res_rlm, type = 'map', main = "Robust Regression")
 plot(res_rf_cat, type = 'map', main = "Random Forest - Categorical Data")
 ```
 
@@ -172,6 +185,7 @@ plot(res_gam, type = 'perf', main = "GAM")
 plot(res_lm, type = 'perf', main = "Linear Model")
 plot(res_earth, type = 'perf', main = "MARS")
 plot(res_gwr, type = 'perf', main = "Geographically Weighted Regression")
+plot(res_rlm, type = 'perf', main = "Robust Regression")
 plot(res_rf_cat, type = 'perf', main = "Random Forest - Categorical Data")
 ```
 
