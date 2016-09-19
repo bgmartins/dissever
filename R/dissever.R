@@ -77,7 +77,7 @@ utils::globalVariables(c(
 
 # Computes the regression model between some coarse data and
 # the stack of covariates
-.update_model <- function(x, y, method = 'rf', control, tune_grid, data_type){
+.update_model <- function(x, y, method = 'rf', control, tune_grid, data_type="numeric"){
   # Picks the parameters of the model using error on the first run
   # Then use the optimised parameters in the iteration loop to save
   # on computing time
@@ -297,7 +297,7 @@ utils::globalVariables(c(
     stop('Resolution of fine data should be higher than resolution of coarse data')
   }
 
-  if (!(data_type == "numeric" || data_type=="count" || data_type=="categorical")) {
+  if (!(data_type == "numeric" || data_type == "count" || data_type == "categorical" )) {
     stop('Data type should be numeric, categorical or count')
   }
   
