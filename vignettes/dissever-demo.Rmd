@@ -107,6 +107,16 @@ res_earth <- dissever(
   max_iter = max_iter
 )
 
+# Geographically Weighted Regression
+res_gwr <- dissever(
+  coarse = edgeroi$carbon, 
+  fine = edgeroi$predictors, 
+  method = "gwr", 
+  p = p_train, 
+  min_iter = min_iter,
+  max_iter = max_iter
+)
+
 # Random Forest - example for downscaling categorical data
 # First we reclassify the numeric raster into 4 classes
 m <- cellStats(edgeroi$carbon, stat=fivenum) 
@@ -145,6 +155,7 @@ plot(res_cubist, type = 'map', main = "Cubist")
 plot(res_gam, type = 'map', main = "GAM")
 plot(res_lm, type = 'map', main = "Linear Model")
 plot(res_earth, type = 'map', main = "MARS")
+plot(res_gwr, type = 'map', main = "Geographically Weighted Regression")
 plot(res_rf_cat, type = 'map', main = "Random Forest - Categorical Data")
 ```
 
@@ -160,6 +171,7 @@ plot(res_cubist, type = 'perf', main = "Cubist")
 plot(res_gam, type = 'perf', main = "GAM")
 plot(res_lm, type = 'perf', main = "Linear Model")
 plot(res_earth, type = 'perf', main = "MARS")
+plot(res_gwr, type = 'perf', main = "Geographically Weighted Regression")
 plot(res_rf_cat, type = 'perf', main = "Random Forest - Categorical Data")
 ```
 
