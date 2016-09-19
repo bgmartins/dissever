@@ -12,7 +12,7 @@ vignette: >
 You can use devtools to install the dissever package from the github repository:
 ```{r plot_coarse, fig.width=6, fig.height=6}
 library(devtools)
-install_github("dissever", username="bgmartins")
+install_github("bgmartins/dissever")
 ```
 
 Our examples use the following libraries:
