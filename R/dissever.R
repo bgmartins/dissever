@@ -1,69 +1,34 @@
 #' @include dissever-package.R
 
-# Horrible hack to keep CRAN happy and suppress NOTES about
-# parts of the code that use non-standard evaluation.
+# Horrible hack to keep CRAN happy and suppress NOTES about parts of the code that use non-standard evaluation.
 # See:
 # http://stackoverflow.com/questions/9439256/how-can-i-handle-r-cmd-check-no-visible-binding-for-global-variable-notes-when
 # https://github.com/smbache/magrittr/issues/29
-utils::globalVariables(c(
-  "cell",
-  "diss",
-  ".",
-  "matches",
-  "i"
-))
+utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 
-# simple wrapper around raster::as.data.frame that
-# handles categorical data columns correctly
+# simple wrapper around raster::as.data.frame that handles categorical data columns correctly
 .as_data_frame_factors <- function(x, ...) {
-
-  # Get data.frame
   res <- as.data.frame(x, ...)
-
-  # We only need to do something if
-  # there is categorical data in the stack
   if (any(is.factor(x))) {
-
-    # Get names of original stack
-    # (not affected by bug)
+    # Get names of original stack (not affected by bug)
     nm <- names(x)
-
     # Test if coordinates have been returned
     args <- list(...)
-    if("xy" %in% names(args)) {
-      xy <- args[['xy']]
-    } else {
-      xy <- FALSE
-    }
-
-    # If coordinates asked to be returned, we need
-    # to take this into account
-    if (xy) {
-      names(res)[-1*1:2] <- nm
-    } else {
-      names(res) <- nm
-    }
-
+    if("xy" %in% names(args)) { xy <- args[['xy']] } else { xy <- FALSE }
+    # If coordinates asked to be returned, we need to take this into account
+    if (xy) { names(res)[-1*1:2] <- nm } else { names(res) <- nm }
   }
-
   res
 }
 
-.join_interpol <- function(coarse_df, fine_df, attr, by = 'cell'){
+.join_interpol <- function(coarse_df, fine_df, attr, by = 'cell') {
   # Nearest-neighbour interpolation as an inner SQL join
-  left_join(fine_df, coarse_df , by = by) %>%
-    select(matches(attr))
+  left_join(fine_df, coarse_df , by = by) %>% select(matches(attr))
 }
 
-.create_lut_fine <- function(coarse, fine) {
-  extract(coarse, coordinates(fine))
-}
+.create_lut_fine <- function(coarse, fine) { extract(coarse, coordinates(fine)) }
 
-.default_control_init <- caret::trainControl(
-  method = 'cv',
-  number = 5#,
-  #verboseIter = TRUE
-)
+.default_control_init <- caret::trainControl( method = 'cv', number = 5 )
 
 # fits one model to the entire training set
 .default_control_iter <- caret::trainControl(method = 'none')
@@ -75,49 +40,14 @@ utils::globalVariables(c(
   grid
 }
 
-# Computes the regression model between some coarse data and
-# the stack of covariates
+# Computes the carret regression model between some coarse data and the stack of covariates
 .update_model <- function(x, y, method = 'rf', control, tune_grid, data_type="numeric"){
-  # Picks the parameters of the model using error on the first run
-  # Then use the optimised parameters in the iteration loop to save
-  # on computing time
-  # Basically we just need to change the trainControl object to do that
-
-    y_aux = y
-    if ( data_type == 'categorical' ) { y_aux = factor( y_aux ) }
-
-  # *** Ensemble modelling ***
-#   if (length(method > 1)) {
-#     require(caretEnsemble)
-#
-#     # Create the list of caret models to fit
-#     models <- lapply(method, function(x) {
-#       caretModelSpec(method = x, tuneGrid = tune_grid)
-#     })
-#     # Use the model names to index the models in list
-#     names(models) <- method
-#
-#     # create CaretList
-#     model_list <- caretList(
-#       x = x,
-#       y = y_aux,
-#       trControl = control,
-#       tuneList = models
-#     )
-#
-#     fit <- caretEnsemble(model_list)
-#
-#   } else {
-    fit <- train(
-      x = x,
-      y = y_aux, # in this case train needs a vector
-      method = method,
-      trControl = control,
-      # preProc=c("center", "scale"),
-      tuneGrid  = tune_grid 
-    )
-  # }
-
+  # Pick the parameters of the model using error on the first run.
+  # Then use the optimised parameters in the iteration loop to save on computing time.
+  # Basically we just need to change the trainControl object to do that.
+  y_aux = y
+  if ( data_type == 'categorical' ) { y_aux = factor( y_aux ) }
+  fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
 }
 
@@ -127,14 +57,8 @@ utils::globalVariables(c(
 
 # Generates prediction intervals using bootstraping
 .bootstrap_ci <- function(fit, fine_df, level = 0.9, n = 50L, data_type="numeric" ) {
-
-  # training data
   df <- fit$trainingData
-
-  # Regression method
   reg_method <- fit$method
-
-  # Bootstrap
   boot_samples <- boot(df, function(data, idx, method = reg_method) {
     bootstrap_df <- data[idx, ]
 #    if ( data_type == "categorical" ) { bootstrap_df <- factor(bootstrap_df) }
@@ -592,9 +516,7 @@ utils::globalVariables(c(
       perf = data.frame(perf)
     )
   }
-  
   class(res) <- c(class(res), 'dissever')
-
   return(res)
 }
 
@@ -608,18 +530,14 @@ utils::globalVariables(c(
 #' @examples
 #' # See ?dissever
 plot.dissever <- function(x, type = 'map', ...) {
-
   if (! type %in% c('map', 'perf')) stop('Invalid type of plot.')
-
   if (type == 'map') {
     plot(x$map, col = viridis(100), ...)
   } else {
-    # Get number of iterations
     n_iter <- nrow(x$perf)
     plot(1:n_iter, x$perf$error, type = 'l', xlab = 'Iteration', ylab = 'Error', ylim = range(x$perf), ...)
     lines(1:n_iter, x$perf$upper_error, lty = 3)
     lines(1:n_iter, x$perf$lower_error, lty = 3)
-    # Get selected model
     best <- which.min(x$perf$error)
     points(best, x$perf[best, 'error'], pch = 16, col = 2)
   }
@@ -631,9 +549,7 @@ plot.dissever <- function(x, type = 'map', ...) {
 #' @param x object of class \code{dissever}, output from the \code{dissever} function
 #' @param ... Additional arguments passed to print
 #' @author Pierre Roudier
-print.dissever <- function(x, ...) {
-  print(x$fit, ...)
-}
+print.dissever <- function(x, ...) { print(x$fit, ...) }
 
 #' @name summary.dissever
 #' @title Prints summary of the model used in the dissever procedure
@@ -641,14 +557,10 @@ print.dissever <- function(x, ...) {
 #' @param object object of class \code{dissever}, output from the \code{dissever} function
 #' @param ... Additional arguments passed to summary
 #' @author Pierre Roudier
-summary.dissever <- function(object, ...) {
-  summary(object$fit, ...)
-}
+summary.dissever <- function(object, ...) { summary(object$fit, ...) }
 
 if(!isGeneric("generate_ci")) {
-  setGeneric("generate_ci", function(object, covariates, ...) {
-    standardGeneric("generate_ci")
-  })
+  setGeneric("generate_ci", function(object, covariates, ...) { standardGeneric("generate_ci") })
 }
 
 #' @name generate_ci
@@ -680,16 +592,10 @@ if(!isGeneric("generate_ci")) {
 #'
 #' plot(ci)
 #' }
-setMethod(
-  'generate_ci',
-  signature(object = "list", covariates = "RasterStack"),
-  .generate_ci
-)
+setMethod('generate_ci', signature(object = "list", covariates = "RasterStack"), .generate_ci )
 
 if(!isGeneric("dissever")) {
-  setGeneric("dissever", function(coarse, fine, ...) {
-    standardGeneric("dissever")
-  })
+  setGeneric("dissever", function(coarse, fine, ...) { standardGeneric("dissever") })
 }
 
 #' @title Spatial downscaling
@@ -747,8 +653,4 @@ if(!isGeneric("dissever")) {
 #' plot(res_lm, type = 'map', main = "Dissever using GAM")
 #' plot(res_lm, type = 'perf', main = "Dissever using GAM")
 #'
-setMethod(
-  'dissever',
-  signature(fine = "RasterStack"),
-  .dissever
-)
+setMethod( 'dissever', signature(fine = "RasterStack"), .dissever )
