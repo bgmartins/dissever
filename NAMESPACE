@@ -17,9 +17,10 @@ importFrom(magrittr, "%>%")
 
 importFrom(viridis, viridis)
 
-importFrom(spgwr, gwr)
-importFrom(spgwr, gwr.sel)
-importFrom(spgwr, ggwr.sel)
+importFrom(GWmodel, gwr.basic)
+importFrom(GWmodel, gwr.robust)
+importFrom(GWmodel, gwr.mixed)
+importFrom(GWmodel, bw.gwr)
 
 export(print.dissever)
 S3method(print, dissever)
