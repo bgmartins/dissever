@@ -20,5 +20,8 @@ r_packages:
   - randomForest
   - gam
   - Cubist
+  - raster
+  - dplyr
+
 
 
