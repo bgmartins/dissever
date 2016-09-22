@@ -370,26 +370,20 @@ utils::globalVariables(c(
   lon = list()
   lat = list()
   if(method == "gwr") {
-  	if (data_type == "count" || data_type == "numeric") {
-  	  lon_spl = fine_df[id_spl, 'x']
+    if (data_type == "count" || data_type == "numeric") {
+      lon_spl = fine_df[id_spl, 'x']
       lat_spl = fine_df[id_spl, 'y']
       lon = fine_df$x
       lat = fine_df$y
-
       varaux = fine_df[id_spl, nm_covariates]
       varr = y_aux
       datagwr = data.frame(varr, varaux, lat_spl, lon_spl)
       coordinates = as.matrix(data.frame(datagwr$lat_spl, datagwr$lon_spl))
-
       form = as.formula(paste("varr~",paste(names(varaux), collapse="+")))
       #baux <- gwr.sel(form, data = datagwr, coords = coordinates, longlat=TRUE, adapt=TRUE)
-      #print(baux)
-
     } else {
-  	  # Stop if data_type is not "count" or "numeric"
-	  stop('Data type should be count or numeric, when performing geographically weighted regression')
-  	}
-
+      stop('Data type should be count or numeric, when performing geographically weighted regression')
+    }
   } else {
     fit <- .update_model(
       x = fine_df[id_spl, nm_covariates],
@@ -458,13 +452,14 @@ utils::globalVariables(c(
     # Apply adjustement and replace the current
     if ( !( data_type == "categorical" ) ) { diss_result$diss <- diss_result$adjust * diss_result$diss }
 
-    # Update model
-    if (verbose) message('| -- updating model')
+
 
     # Sampling points
     # id_spl <- sample(1:nrow(fine_df), size = n_spl)
 
+    # Update model and update dissever predictions on fine grid
     if(method != "gwr") {
+      if (verbose) message('| -- updating model')
       fit <- .update_model(
         x = fine_df[id_spl, nm_covariates],
         y = diss_result[id_spl, 'diss', drop = TRUE],
@@ -474,28 +469,21 @@ utils::globalVariables(c(
         data_type = data_type
       )
     }
-
-    if (verbose) message('| -- updating predictions')
-
-    # Update dissever predictions on fine grid
     if(method == "gwr") {
       varaux = fine_df[id_spl, nm_covariates]
       varr = diss_result[id_spl, 'diss', drop = TRUE]
-
       datagwr = data.frame(varr, varaux, lat_spl, lon_spl)
       coordinates = as.matrix(data.frame(datagwr$lat_spl, datagwr$lon_spl))
-
       varaux = fine_df[nm_covariates]
       lon_res = lon
       lat_res = lat
-
       unkcoordinates = SpatialPointsDataFrame(data.frame(lat_res, lon_res), data.frame(varaux), proj4string = CRS("+proj=longlat +datum=WGS84"))
-      
       form = as.formula(paste("varr~",paste(names(varaux), collapse="+")))
-	    model = gwr(form, data = datagwr, coords = coordinates, longlat = TRUE, adapt = 0.5, fit.points = unkcoordinates, predictions = TRUE)
+      model = gwr(form, data = datagwr, coords = coordinates, longlat = TRUE, adapt = 0.5, fit.points = unkcoordinates, predictions = TRUE)
+      if (verbose) message('| -- updating predictions')
       diss_result$diss = model$SDF$pred
-
     } else {
+            if (verbose) message('| -- updating predictions')
 	    diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
     }
 
