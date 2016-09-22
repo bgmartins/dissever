@@ -1,6 +1,8 @@
 import(caret)
 import(methods)
 import(pycno)
+import(raster)
+import(dplyr)
 
 importFrom(sp, coordinates)
 
