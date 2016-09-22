@@ -29,7 +29,9 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
-    cubist
+    Cubist,
+    randomForest,
+    gam
 Collate:
     'dissever-package.R'
     'dissever.R'
