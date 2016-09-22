@@ -20,6 +20,7 @@ Imports:
     raster,
     plyr,
     dplyr,
+    raster,
     foreach,
     boot,
     magrittr,
@@ -27,7 +28,8 @@ Imports:
     spgwr
 Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    cubist
 Collate:
     'dissever-package.R'
     'dissever.R'
