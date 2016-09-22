@@ -304,7 +304,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       datagwr = data.frame(varr, varaux, lat_spl, lon_spl)
       coordinates = as.matrix(data.frame(datagwr$lat_spl, datagwr$lon_spl))
       form = as.formula(paste("varr~",paste(names(varaux), collapse="+")))
-      #baux <- gwr.sel(form, data = datagwr, coords = coordinates, longlat=TRUE, adapt=TRUE)
     } else {
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
@@ -396,13 +395,14 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     if(method == "gwr") {
       varaux = fine_df[id_spl, nm_covariates]
       varr = diss_result[id_spl, 'diss', drop = TRUE]
-      datagwr = data.frame(varr, varaux, lat_spl, lon_spl)
-      coordinates = as.matrix(data.frame(datagwr$lat_spl, datagwr$lon_spl))
+      datagwr = data.frame(varr, varaux)
+      coordinates = as.matrix(data.frame(lat_spl, lon_spl))
       varaux = fine_df[nm_covariates]
       lon_res = lon
       lat_res = lat
       unkcoordinates = SpatialPointsDataFrame(data.frame(lat_res, lon_res), data.frame(varaux), proj4string = CRS("+proj=longlat +datum=WGS84"))
       form = as.formula(paste("varr~",paste(names(varaux), collapse="+")))
+      #baux <- gwr.sel(form, data = datagwr, coords = coordinates, longlat=TRUE, adapt=TRUE)
       model = gwr(form, data = datagwr, coords = coordinates, longlat = TRUE, adapt = 0.5, fit.points = unkcoordinates, predictions = TRUE)
       if (verbose) message('| -- updating predictions')
       diss_result$diss = model$SDF$pred
