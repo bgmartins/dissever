@@ -475,6 +475,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   }
   
   if (data_type == 'count') { map[map < 0.0] <- 0 }
+  print(diss_result)
+  print("*****")
+  print(map)
   map <- rasterFromXYZ(
     data.frame(
       diss_result[, c(1,2)], #c('x', 'y')
