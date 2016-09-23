@@ -396,8 +396,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       fit <- gwr.basic(form, data = datagwr, regression.points = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE)
       if (verbose) message('| -- updating predictions')
       diss_result$diss = fit$SDF$pred
-      head(fit$SDF)
-      message(diss_result$diss)
+      print(fit$SDF)
+      print(diss_result$diss)
     } else {
             if (verbose) message('| -- updating predictions')
 	    diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
