@@ -21,6 +21,7 @@ importFrom(viridis, viridis)
 importFrom(GWmodel, gwr.basic)
 importFrom(GWmodel, gwr.robust)
 importFrom(GWmodel, gwr.mixed)
+importFrom(GWmodel, gwr.predict)
 importFrom(GWmodel, bw.gwr)
 
 export(print.dissever)
