@@ -391,15 +391,15 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       varr = diss_result[id_spl, 'diss', drop = TRUE]
       datagwr = data.frame(varr, varaux)
       datagwr = SpatialPointsDataFrame(data.frame(lat_spl, lon_spl), data.frame(datagwr), proj4string = CRS("+proj=longlat +datum=WGS84"))
-      coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), proj4string = CRS("+proj=longlat +datum=WGS84"))
+      coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), data.frame(lat, lon), proj4string = CRS("+proj=longlat +datum=WGS84"))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
       # baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE)
       baux = 5
       if (verbose) message('| -- updating model')
-      model = gwr.basic(form, data = datagwr, regression.points = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE)
+      fit <- gwr.basic(form, data = datagwr, regression.points = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE)
       if (verbose) message('| -- updating predictions')
-      diss_result$diss = model$SDF$pred
+      diss_result$diss = fit$SDF$pred
     } else {
             if (verbose) message('| -- updating predictions')
 	    diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
@@ -454,12 +454,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     if (error < best_fit){
       best_fit <- error
       best_iteration <- k
-
-      if(method == "gwr") {
-        best_model <- diss_result$diss
-      } else {
-        best_model <- fit
-      }
+      best_model <- fit
     }
 
     # We only test improvement if more than 5 iterations
@@ -481,8 +476,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
 
   # Create Raster result
-  if(method == "gwr") {
-    map <- best_model
+  if(method == "gwr" || method == "gwr.robust" || method == "gwr.mixed") {
+    map <- fit$SDF$pred
   } else {
     map <- .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
   }
@@ -497,9 +492,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     crs = projection(fine)
   )
 
-  if(method == "gwr") {
+  if(method == "gwr" || method == "gwr.robust" || method == "gwr.mixed" ) {
     res <- list(
-      fit = "Not valid for GWR",
+      fit = fit$lm,
       map = map,
       perf = data.frame(perf)
     )
