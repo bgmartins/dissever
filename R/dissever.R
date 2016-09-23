@@ -294,17 +294,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   lon = list()
   lat = list()
   if(method == "gwr" || method == "gwr.robust" || method == "gwr.mixed" ) {
-    if (data_type == "count" || data_type == "numeric") {
-      lon_spl = fine_df[id_spl, 'x']
-      lat_spl = fine_df[id_spl, 'y']
-      lon = fine_df$x
-      lat = fine_df$y
-      varaux = fine_df[id_spl, nm_covariates]
-      varr = y_aux
-      datagwr = data.frame(varr, varaux, lat_spl, lon_spl)
-      coordinates = as.matrix(data.frame(datagwr$lat_spl, datagwr$lon_spl))
-      form = as.formula(paste("varr~",paste(names(varaux), collapse="+")))
-    } else {
+    if (data_type != "count" && data_type != "numeric") {
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
   } else {
@@ -393,14 +383,18 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       )
     }
     if(method == "gwr" || method == "gwr.robust" || method == "gwr.mixed") {
+      lon_spl = fine_df[id_spl, 'x']
+      lat_spl = fine_df[id_spl, 'y']
+      lon = fine_df$x
+      lat = fine_df$y
       varaux = fine_df[id_spl, nm_covariates]
       varr = diss_result[id_spl, 'diss', drop = TRUE]
       datagwr = data.frame(varr, varaux)
-      lon_res = lon
-      lat_res = lat
-      datagwr = SpatialPointsDataFrame(data.frame(lat_res, lon_res), data.frame(datagwr), proj4string = CRS("+proj=longlat +datum=WGS84"))
+      datagwr = SpatialPointsDataFrame(data.frame(lat_spl, lon_spl), data.frame(datagwr), proj4string = CRS("+proj=longlat +datum=WGS84"))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
+      if (verbose) message('| -- tuning GWR bandwidth')
       baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE)
+      if (verbose) message('| -- updating model')
       model = gwr.basic(form, data = datagwr, regression.points = datagwr, longlat = TRUE, bw = baux, kernel="gaussian")
       if (verbose) message('| -- updating predictions')
       diss_result$diss = model$SDF$pred
