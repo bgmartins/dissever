@@ -293,7 +293,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   lat_spl = list()
   lon = list()
   lat = list()
-  if( startsWith(method,"gwr") ) {
+  if( grepl('^gwr',method) ) {
     if (data_type != "count" && data_type != "numeric") {
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
@@ -369,7 +369,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     # id_spl <- sample(1:nrow(fine_df), size = n_spl)
 
     # Update model and update dissever predictions on fine grid
-    if( ! startsWith(method,"gwr") ) {
+    if( ! grepl('^gwr',method) ) {
       if (verbose) message('| -- updating model')
       fit <- .update_model(
         x = fine_df[id_spl, nm_covariates],
@@ -463,14 +463,14 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     }
   }
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
-  if(startsWith(method,"gwr")) {
+  if(grepl('^gwr',method)) {
     map <- fit$SDF$prediction
   } else {
     map <- .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
   }
   if (data_type == 'count') { map[map < 0.0] <- 0 }
   map <- rasterFromXYZ( data.frame( diss_result[, c('x', 'y')], diss = map ), res = res(fine), crs = projection(fine) )
-  if(startsWith(method,"gwr")) {
+  if(grepl('^gwr',method)) {
     res <- list( fit = fit$SDF, map = map, perf = data.frame(perf) )
   } else {
     res <- list( fit = fit, map = map, perf = data.frame(perf) )
