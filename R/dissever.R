@@ -293,7 +293,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   lat_spl = list()
   lon = list()
   lat = list()
-  if(method == "gwr" || method == "gwr.robust" || method == "gwr.mixed" ) {
+  if(method == "gwr" ) {
     if (data_type != "count" && data_type != "numeric") {
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
@@ -369,7 +369,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     # id_spl <- sample(1:nrow(fine_df), size = n_spl)
 
     # Update model and update dissever predictions on fine grid
-    if(method != "gwr" && method != "gwr.robust" && method != "gwr.mixed") {
+    if(method != "gwr") {
       if (verbose) message('| -- updating model')
       fit <- .update_model(
         x = fine_df[id_spl, nm_covariates],
@@ -380,7 +380,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
         data_type = data_type
       )
     }
-    if(method == "gwr" || method == "gwr.robust" || method == "gwr.mixed") {
+    if(method == "gwr") {
       lon_spl = fine_df[id_spl, 'x']
       lat_spl = fine_df[id_spl, 'y']
       lon = fine_df$x
@@ -388,7 +388,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       varaux = fine_df[id_spl, nm_covariates]
       varr = diss_result[id_spl, 'diss', drop = TRUE]
       datagwr = SpatialPointsDataFrame(data.frame(lat_spl, lon_spl), data.frame(varr, varaux), proj4string = CRS("+proj=longlat +datum=WGS84"))
-      coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), data.frame(lat, lon), proj4string = CRS("+proj=longlat +datum=WGS84"))
+      coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), data.frame(fine_df[nm_covariates]), proj4string = CRS("+proj=longlat +datum=WGS84"))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
       baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE)
@@ -470,7 +470,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
 
   # Create Raster result
-  if(method == "gwr" || method == "gwr.robust" || method == "gwr.mixed") {
+  if(method == "gwr") {
     map <- fit$SDF$pred
   } else {
     map <- .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
@@ -486,9 +486,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     crs = projection(fine)
   )
 
-  if(method == "gwr" || method == "gwr.robust" || method == "gwr.mixed" ) {
+  if(method == "gwr" ) {
     res <- list(
-      fit = fit$lm,
+      fit = fit$SDF,
       map = map,
       perf = data.frame(perf)
     )
