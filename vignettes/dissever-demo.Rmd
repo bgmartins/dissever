@@ -15,21 +15,16 @@ library(devtools)
 install_github("bgmartins/dissever")
 ```
 
-Our examples use the following libraries:
+Our examples use the dissever library, which automatically checks for the availability of other libraries that may be used:
 ```{r libs, results='hide', message=FALSE}
 library(dissever)
-
-library(raster)
-library(viridis)
-library(dplyr)
-library(magrittr)
 ```
 
-Here is the coarse model to dissever:
+Here is the coarse model to downscale in our tests:
 ```{r plot_coarse, fig.width=6, fig.height=6}
 plot(edgeroi$carbon, col = viridis(100))
 ```
-and here are the covariates that will be used for the disseveration:
+and here are the covariates that will be used for supporting the disseveration process:
 
 ```{r plot_fine, fig.width=8, fig.height=6}
 plot(edgeroi$predictors, col = viridis(100))
