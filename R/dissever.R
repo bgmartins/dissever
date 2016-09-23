@@ -469,18 +469,15 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 
   # Create Raster result
   if(method == "gwr") {
-    map <- fit$SDF$pred
+    map <- fit$SDF$prediction
   } else {
     map <- .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
   }
   
   if (data_type == 'count') { map[map < 0.0] <- 0 }
-  print(diss_result)
-  print("*****")
-  print(map)
   map <- rasterFromXYZ(
     data.frame(
-      diss_result[, c(1,2)], #c('x', 'y')
+      diss_result[, c('x', 'y')],
       diss = map
     ),
     res = res(fine),
