@@ -173,7 +173,7 @@ We can also analyse and plot the optimisation of the dissevering model:
 
 ```{r optim, fig.width=8, fig.height=8}
 # Plot performance
-par(mfrow = c(4, 2))
+par(mfrow = c(8, 2))
 plot(res_rf, type = 'perf', main = "Random Forest")
 plot(res_cubist, type = 'perf', main = "Cubist")
 plot(res_gam, type = 'perf', main = "GAM")
