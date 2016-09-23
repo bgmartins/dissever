@@ -4,6 +4,7 @@ import(pycno)
 import(raster)
 import(dplyr)
 import(sp)
+import(parallel)
 
 importFrom(plyr, aaply)
 
