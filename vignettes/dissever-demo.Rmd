@@ -15,9 +15,10 @@ library(devtools)
 install_github("bgmartins/dissever")
 ```
 
-Our examples use the dissever library, which automatically checks for the availability of other libraries that may be used:
+Our examples use the dissever library, together with the raster library:
 ```{r libs, results='hide', message=FALSE}
 library(dissever)
+library(raster)
 ```
 
 Here is the coarse model to downscale in our tests:
