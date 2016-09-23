@@ -391,7 +391,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       varr = diss_result[id_spl, 'diss', drop = TRUE]
       datagwr = data.frame(varr, varaux)
       datagwr = SpatialPointsDataFrame(data.frame(lat_spl, lon_spl), data.frame(datagwr), proj4string = CRS("+proj=longlat +datum=WGS84"))
-      coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), data.frame(nm_covariates), proj4string = CRS("+proj=longlat +datum=WGS84"))
+      coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), proj4string = CRS("+proj=longlat +datum=WGS84"))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
       # baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE)
