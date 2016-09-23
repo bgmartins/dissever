@@ -388,8 +388,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       lat = fine_df$y
       varaux = fine_df[id_spl, nm_covariates]
       varr = diss_result[id_spl, 'diss', drop = TRUE]
-      datagwr = SpatialPointsDataFrame(data.frame(lat_spl, lon_spl), data.frame(varr, varaux), proj4string = projection(fine))
-      coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), data.frame(fine_df[nm_covariates]), proj4string = projection(fine))
+      datagwr = SpatialPointsDataFrame(data.frame(lat_spl, lon_spl), data.frame(varr, varaux), proj4string = CRS(projection(fine)))
+      coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), data.frame(fine_df[nm_covariates]), proj4string = CRS(projection(fine)))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
       baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE)
