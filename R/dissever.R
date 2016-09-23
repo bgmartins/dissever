@@ -293,7 +293,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   lat_spl = list()
   lon = list()
   lat = list()
-  if(method == "gwr") {
+  if(method == "gwr" || method == "gwr.robust" || method == "gwr.mixed" ) {
     if (data_type == "count" || data_type == "numeric") {
       lon_spl = fine_df[id_spl, 'x']
       lat_spl = fine_df[id_spl, 'y']
@@ -381,7 +381,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     # id_spl <- sample(1:nrow(fine_df), size = n_spl)
 
     # Update model and update dissever predictions on fine grid
-    if(method != "gwr") {
+    if(method != "gwr" && method != "gwr.robust" && method != "gwr.mixed") {
       if (verbose) message('| -- updating model')
       fit <- .update_model(
         x = fine_df[id_spl, nm_covariates],
@@ -392,18 +392,16 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
         data_type = data_type
       )
     }
-    if(method == "gwr") {
+    if(method == "gwr" || method == "gwr.robust" || method == "gwr.mixed") {
       varaux = fine_df[id_spl, nm_covariates]
       varr = diss_result[id_spl, 'diss', drop = TRUE]
       datagwr = data.frame(varr, varaux)
-      coordinates = as.matrix(data.frame(lat_spl, lon_spl))
-      varaux = fine_df[nm_covariates]
       lon_res = lon
       lat_res = lat
-      unkcoordinates = SpatialPointsDataFrame(data.frame(lat_res, lon_res), data.frame(varaux), proj4string = CRS("+proj=longlat +datum=WGS84"))
-      form = as.formula(paste("varr~",paste(names(varaux), collapse="+")))
-      baux <- bw.gwr(form, data = unkcoordinates, kernel="gaussian", longlat=TRUE, adaptive=TRUE)
-      model = gwr.basic(form, data = datagwr, regression.points = coordinates, longlat = TRUE, bw = baux, kernel="gaussian")
+      datagwr = SpatialPointsDataFrame(data.frame(lat_res, lon_res), data.frame(datagwr), proj4string = CRS("+proj=longlat +datum=WGS84"))
+      form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
+      baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE)
+      model = gwr.basic(form, data = datagwr, regression.points = datagwr, longlat = TRUE, bw = baux, kernel="gaussian")
       if (verbose) message('| -- updating predictions')
       diss_result$diss = model$SDF$pred
     } else {
