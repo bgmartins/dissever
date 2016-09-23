@@ -61,20 +61,12 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   reg_method <- fit$method
   boot_samples <- boot(df, function(data, idx, method = reg_method) {
     bootstrap_df <- data[idx, ]
-#    if ( data_type == "categorical" ) { bootstrap_df <- factor(bootstrap_df) }
-    bootstrap_fit <- train(
-      .outcome ~ .,
-      data = bootstrap_df,
-      method = method,
-      trControl = trainControl(method = "none"),
-      tuneGrid = fit$bestTune)
-
+    # if ( data_type == "categorical" ) { bootstrap_df <- factor(bootstrap_df) }
+    bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
     # generate predictions
     predict(bootstrap_fit, fine_df)
-
   }, n)
-
-  # If level is a number < 1
+  # If level is a number < 1, or instead if level is a function
   if (is.numeric(level)) {
     ci <- c((1 - level) / 2, 1 - (1 - level) / 2)
     if ( data_type == "categorical" ) {
@@ -90,71 +82,36 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
        upper = aaply(boot_samples$t, 2, quantile, probs = ci[2])
       )
     }
-    # if level is a function
   } else if (is.function(level)) {
     if ( data_type == "categorical" ) {
-      res <- data.frame(
-      mean = aaply(boot_samples$t, 2, median),
-      uncert = aaply(boot_samples$t, 2, level)
-     )
+      res <- data.frame( mean = aaply(boot_samples$t, 2, median), uncert = aaply(boot_samples$t, 2, level) )
     } else {
-      res <- data.frame(
-      mean = aaply(boot_samples$t, 2, mean),
-      uncert = aaply(boot_samples$t, 2, level)
-     )
+      res <- data.frame( mean = aaply(boot_samples$t, 2, mean), uncert = aaply(boot_samples$t, 2, level ) )
     }
-    # else we throw an error
   } else {
     stop('Incorrect value for the "level" option.')
   }
-
   as.numeric( res )
 }
 
 .generate_ci <- function(object, covariates, level = 0.9, n = 50L) {
   fine_df <- na.exclude(.as_data_frame_factors(covariates, xy = TRUE))
-
   b <- .bootstrap_ci(object$fit, fine_df, level = 0.9, n = 50L)
-
-  res <- rasterFromXYZ(
-    data.frame(
-      fine_df[, 1:2],
-      b
-    ),
-    res = res(covariates),
-    crs = projection(covariates)
-  )
-
+  res <- rasterFromXYZ( data.frame( fine_df[, 1:2], b ), res = res(covariates), crs = projection(covariates) )
   res
 }
 
 .predict_map <- function(fit, data, split = NULL, boot = NULL, level = 0.9, data_type="numeric") {
   if (.has_parallel_backend()) {
-    # Get number of registered workers
     n_workers <- length(unique(split))
-
-    # The split vector is assigning a cmputing core to
-    # each sample in `data`
     if (n_workers < 1) stop('Wrong split vector')
-
-    # Parallel prediction
-    res <- foreach(
-      i = 0:(n_workers - 1),
-      .combine = c,
-      .packages = 'caret'
-    ) %dopar% {
-      if (is.null(boot)) {
-        predict(fit, newdata = data[split == i, ])
-      } else {
-        # Use bootstraping to get confidence intervals
+    res <- foreach( i = 0:(n_workers - 1), .combine = c, .packages = 'caret' ) %dopar% {
+      if (is.null(boot)) { predict(fit, newdata = data[split == i, ]) } else {
         .bootstrap_ci(fit = fit, fine_df = data[split == i, ], level = level, n = boot, data_type=data_type)
       }
     }
   } else {
-    if (is.null(boot)) {
-      res <- predict(fit, data)
-    } else {
-      # Use bootstraping to get confidence intervals
+    if (is.null(boot)) { res <- predict(fit, data) } else {
       res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
     }
   }
@@ -179,27 +136,21 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     data_type = "numeric",
     add_pycno = 0,
     verbose = FALSE
-  ){
-
+  ) {
   input_polygons = class(coarse) == "SpatialPolygonsDataFrame"
-
   if ( data_type != "count" && add_pycno > 0 ) {
     stop('Initialization based on pycnophylactic interpolation should only be used with count data')
   }
-  
   if ( !input_polygons && class(coarse) != "RasterLayer" ) {
     stop('The course data should be provided as a SpatialPolygonsDataFrame or as a RasterLayer')
   }
-  
   if ( !input_polygons && !is.null(coarse_var_names) ) {
     stop('The parameter coarse_var_names should only be used when providing a SpatialPolygonsDataFrame as the coarse data')
   }
-  
   # Horrible hack, avoid division by 0 in pycnophylactic interpolation
   if(input_polygons && data_type == "count" && nrow(coarse[which(coarse[[coarse_var_names[2]]] == 0),]) > 0) {
-    coarse[[coarse_var_names[2]]] = coarse[[coarse_var_names[2]]] + 0.0001
+    coarse[[coarse_var_names[2]]] = coarse[[coarse_var_names[2]]] + 0.00001
   }
-  
   if ( input_polygons ) {
     if ( is.null(coarse_var_names) ) { coarse_var_names <- names( coarse ) }
     if ( length(coarse_var_names) > 2 ) {
@@ -215,20 +166,13 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     minres <- min(res(fine))
     pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.05, converge=add_pycno, verbose=FALSE ) )
   }
-
-  # Stop if resolution of covariates is not higher than resolution of coarse data
-  if (min(res(fine)) >= min(res(coarse))) {
-    stop('Resolution of fine data should be higher than resolution of coarse data')
-  }
-
+  if (min(res(fine)) >= min(res(coarse))) { stop('Resolution of fine data should be higher than resolution of coarse data') }
   if (!(data_type == "numeric" || data_type == "count" || data_type == "categorical" )) {
     stop('Data type should be numeric, categorical or count')
   }
-  
   # Store names of coarse data and fine-scale covariates
   nm_coarse <- names(coarse)
   nm_covariates <- names(fine)
-
   # Get cell numbers of the coarse grid and convert coarse data to data.frame
   if ( !input_polygons ) {
     ids_coarse <- raster(coarse)
@@ -243,7 +187,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     coarse_df$cell <- sapply(coarse_df$cell, function(x) if(is.factor(x)) { as.numeric(x) } else { x })
     coarse_df$cell2 <- 1:nrow(coarse_df)
   } 
-
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
   # Add coarse cell ID to fine data.frame
@@ -251,44 +194,28 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   ids_coarse2 <- raster(coarse)
   ids_coarse2[] <- 1:ncell(coarse)
   fine_df[['cell2']] <- as.integer(.create_lut_fine(ids_coarse2, fine))
-  if ( add_pycno > 0 || ( input_polygons && data_type == "count") ) {
-    fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer, fine))
-  }
+  if ( add_pycno > 0 || ( input_polygons && data_type == "count") ) { fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer, fine)) }
   fine_df <- na.exclude(fine_df)
-
-  # Resampled national model onto fine grid
+  # Resampled model onto fine grid
   fine_df <- cbind(
     fine_df[, c('x', 'y', 'cell', 'cell2', nm_covariates)],
     .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
   )
-  
   coarse_df <- na.exclude(coarse_df)
   fine_df <- na.exclude(fine_df)
-  
   if (is.null(p)) { p = as.numeric( nrow( coarse_df ) / nrow(fine_df) ) }
-
   # Sub-sample for modelling
-  n_spl <- ceiling(nrow(fine_df) * p) # Number of cells to sample
-
-  if (!is.null(nmax) && nmax > 0) {
-    n_spl <- min(n_spl, nmax)
-  }
-
+  n_spl <- ceiling(nrow(fine_df) * p)
+  if (!is.null(nmax) && nmax > 0) {  n_spl <- min(n_spl, nmax) }
   id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
-
-  # Compute initial model
   if (verbose) message('Selecting best model parameters')
-
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
   if ( data_type == "count" ) { 
-     if ( add_pycno > 0 || input_polygons ) {
-      y_aux = fine_df[id_spl, 'pycnolayer', drop = TRUE]
-     } else {
+     if ( add_pycno > 0 || input_polygons ) { y_aux = fine_df[id_spl, 'pycnolayer', drop = TRUE] } else {
       factor = nrow(fine_df) / nrow( coarse_df )
       y_aux = y_aux / as.numeric( factor )
      }
   }
-  
   lon_spl = list()
   lat_spl = list()
   lon = list()
@@ -298,87 +225,52 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
   } else {
-    fit <- .update_model(
-      x = fine_df[id_spl, nm_covariates],
-      y = y_aux,
-      method = method,
-      control = train_control_init,
-      tune_grid = tune_grid,
-      data_type = data_type
-    )
-
-    # Getting best setof params
+    fit <- .update_model( x = fine_df[id_spl, nm_covariates], y = y_aux, method = method, control = train_control_init, tune_grid = tune_grid, data_type = data_type )
     best_params <- fit$bestTune
-  
     if (verbose) {
-      best_params_str <- paste(
-        lapply(names(best_params), function(x) paste(x, " = ", best_params[[x]], sep = "")),
-        collapse = ", ")
+      best_params_str <- paste( lapply(names(best_params), function(x) paste(x, " = ", best_params[[x]], sep = "")), collapse = ", ")
       message("Parameters retained: ", best_params_str)
     }
   }
-
   # Initiate matrix to store performance of disseveration
   perf <- matrix(ncol = 3, nrow = 0, dimnames = list(NULL,c("lower_error", "error", "upper_error")))
-
   # Initiate dissever result data.frame
   diss_result <- fine_df[, c('x', 'y', 'cell', 'cell2', nm_coarse)]
-  
   # Our first approximation is actually the nearest neighbour interpolation
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
-    if ( add_pycno > 0 || input_polygons ) {
-     diss_result$diss <- fine_df[['pycnolayer']]
-    } else {
+    if ( add_pycno > 0 || input_polygons ) { diss_result$diss <- fine_df[['pycnolayer']] } else {
      factor = nrow(fine_df) / nrow( coarse_df )
      diss_result$diss = diss_result$diss / as.numeric( factor )
     }
   }
-
   # Initiate dissever results data.frame aggregated back to coarse grid
   diss_coarse <- coarse_df
   diss_coarse$diss <- coarse_df[[nm_coarse]]
-
   # Initialising best model selection
   best_fit <- Inf
-
-  # If parallel computing: Get split vector, assigning each row in fine data
-  # to a core (for prediction of models on fine grid)
+  # If parallel computing: Get split vector, assigning each row in fine data to a core (for prediction of models on fine grid)
   if (.has_parallel_backend()) {
     n_cores <- getDoParWorkers()
     split_cores <- .get_split_idx(nrow(fine_df), p = n_cores)
   } else {
     split_cores <- NULL
   }
-
   for (k in 1:max_iter){
-
     if (verbose) message('| - iteration ', k)
     if (verbose) message('| -- computing adjustement factor')
-
     # Calculate adjustment factor
     diss_coarse$adjust <- diss_coarse[[nm_coarse]] / diss_coarse[['diss']]
-
     # Resample adjustement factor to fine grid
     diss_result$adjust <- .join_interpol(diss_coarse, fine_df, attr = 'adjust', by = 'cell2')[, 'adjust']
-
     # Apply adjustement and replace the current
     if ( !( data_type == "categorical" ) ) { diss_result$diss <- diss_result$adjust * diss_result$diss }
-
-    # Sampling points
-    # id_spl <- sample(1:nrow(fine_df), size = n_spl)
-
+    # Sampling new points
+    id_spl <- sample(1:nrow(fine_df), size = n_spl)
     # Update model and update dissever predictions on fine grid
     if( ! grepl('^gwr',method) ) {
       if (verbose) message('| -- updating model')
-      fit <- .update_model(
-        x = fine_df[id_spl, nm_covariates],
-        y = diss_result[id_spl, 'diss', drop = TRUE],
-        method = method,
-        control = train_control_iter,
-        tune_grid = best_params,
-        data_type = data_type
-      )
+      fit <- .update_model( x = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type )
       if (verbose) message('| -- updating predictions')
       diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
     } else {
@@ -405,28 +297,20 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       if (type == 'categorical') { return( median(data) ) }
       return( mean(data) )
     }
-    diss_coarse <- diss_result %>%
-      group_by(cell) %>%
-      summarise(diss = summary_metric(diss,data_type)) %>%
-      inner_join(coarse_df, ., by = "cell")
-
+    diss_coarse <- diss_result %>% group_by(cell) %>% summarise(diss = summary_metric(diss,data_type)) %>% inner_join(coarse_df, ., by = "cell")
     if (verbose) message('| -- computing performance stats')
-
     # compute error
     n <- nrow(diss_coarse)
     sqe <- (diss_coarse[[nm_coarse]] - diss_coarse[['diss']])^2
     mse <- mean(sqe)
     error <- sqrt(mse) # RMSE
-
-    # Confidence intervals
-    # In this case we use 5% C.I.
+    # Confidence intervals (in this case we use 5% C.I.)
     t_student <- qt(1 - (0.05/2), df = n - 1) # 0.975 quantile from Student t distribution
     var <- ((1)^2/(n * (n - 1))) * sum(sqe) # Variance
     se <- sqrt(var) # Standard error
     ci <- se * t_student
     upper_ci <- sqrt(mse + ci)
     lower_ci <- sqrt(max(0, mse - ci))
-
     if (data_type == 'categorical' ) {
       aux <- (diss_coarse[[nm_coarse]] == diss_coarse[['diss']])
       error <- 1.0 - ( sum(aux) / as.numeric(n) )
@@ -434,38 +318,29 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       upper_ci = quantile(aux, probs=0.975)
       lower_ci = quantile(aux, probs=0.025)
     }
-
     # Fill result matrix
     perf <- rbind(perf, c(lower_ci, error, upper_ci))
-
     if (verbose) message("| -- ERROR = ", round(error, 3))
-
     # Choose whether we retain the model or not
-    if (error < best_fit){
+    if (error < best_fit) {
       best_fit <- error
       best_iteration <- k
       best_model <- fit
     }
-
-    # We only test improvement if more than 5 iterations
+    # We only test improvement if more than 3 iterations
     if (k >= min_iter & k >= 3) {
-
       # Computing stop criterion
       stop_criterion <- mean(
         (perf[k - 2, 2] - perf[k - 1, 2]) + # improvement at last iteration
-          (perf[k - 1, 2] - error) + # improvement at this iteration
-          (perf[k - 2, 2] - error) # improvement over last 2 iterations
+        (perf[k - 1, 2] - error) + # improvement at this iteration
+        (perf[k - 2, 2] - error) # improvement over last 2 iterations
       )
-
-      # If we have reach some kind of pseudo-optimium,
-      # we finish iteration stage
+      # If we have reach some kind of pseudo-optimium, we finish the iteration stage
       if (stop_criterion <= thresh) break
     }
   }
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
-  if(grepl('^gwr',method)) {
-    map <- fit$SDF$prediction
-  } else {
+  if(grepl('^gwr',method)) { map <- fit$SDF$prediction } else {
     map <- .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
   }
   if (data_type == 'count') { map[map < 0.0] <- 0 }
