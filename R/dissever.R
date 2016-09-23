@@ -395,9 +395,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       if (verbose) message('| -- updating model')
       fit <- gwr.predict(form, data = datagwr, predictdata = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE)
       if (verbose) message('| -- updating predictions')
-      diss_result$diss = fit$SDF$pred
-      print(fit$SDF)
-      print(diss_result$diss)
+      diss_result$diss = fit$SDF$prediction
     } else {
             if (verbose) message('| -- updating predictions')
 	    diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
