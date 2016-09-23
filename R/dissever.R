@@ -293,7 +293,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   lat_spl = list()
   lon = list()
   lat = list()
-  if(method == "gwr" ) {
+  if( startsWith(method,"gwr") ) {
     if (data_type != "count" && data_type != "numeric") {
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
@@ -369,7 +369,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     # id_spl <- sample(1:nrow(fine_df), size = n_spl)
 
     # Update model and update dissever predictions on fine grid
-    if(method != "gwr") {
+    if( ! startsWith(method,"gwr") ) {
       if (verbose) message('| -- updating model')
       fit <- .update_model(
         x = fine_df[id_spl, nm_covariates],
@@ -379,16 +379,17 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
         tune_grid = best_params,
         data_type = data_type
       )
-    }
-    if(method == "gwr") {
+      if (verbose) message('| -- updating predictions')
+      diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
+    } else {
       lon_spl = fine_df[id_spl, 'x']
       lat_spl = fine_df[id_spl, 'y']
       lon = fine_df$x
       lat = fine_df$y
       varaux = fine_df[id_spl, nm_covariates]
       varr = diss_result[id_spl, 'diss', drop = TRUE]
-      datagwr = SpatialPointsDataFrame(data.frame(lat_spl, lon_spl), data.frame(varr, varaux), proj4string = CRS("+proj=longlat +datum=WGS84"))
-      coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), data.frame(fine_df[nm_covariates]), proj4string = CRS("+proj=longlat +datum=WGS84"))
+      datagwr = SpatialPointsDataFrame(data.frame(lat_spl, lon_spl), data.frame(varr, varaux), proj4string = projection(fine))
+      coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), data.frame(fine_df[nm_covariates]), proj4string = projection(fine))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
       baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE)
@@ -396,9 +397,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       fit <- gwr.predict(form, data = datagwr, predictdata = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE)
       if (verbose) message('| -- updating predictions')
       diss_result$diss = fit$SDF$prediction
-    } else {
-            if (verbose) message('| -- updating predictions')
-	    diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
     }
     if (data_type == 'count') { diss_result$diss[diss_result$diss < 0.0] <- 0 }
     if (verbose) message('| -- computing aggregates of predictions on coarse grid')
@@ -464,38 +462,18 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       if (stop_criterion <= thresh) break
     }
   }
-
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
-
-  # Create Raster result
-  if(method == "gwr") {
+  if(startsWith(method,"gwr")) {
     map <- fit$SDF$prediction
   } else {
     map <- .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
   }
-  
   if (data_type == 'count') { map[map < 0.0] <- 0 }
-  map <- rasterFromXYZ(
-    data.frame(
-      diss_result[, c('x', 'y')],
-      diss = map
-    ),
-    res = res(fine),
-    crs = projection(fine)
-  )
-
-  if(method == "gwr" ) {
-    res <- list(
-      fit = fit$SDF,
-      map = map,
-      perf = data.frame(perf)
-    )
+  map <- rasterFromXYZ( data.frame( diss_result[, c('x', 'y')], diss = map ), res = res(fine), crs = projection(fine) )
+  if(startsWith(method,"gwr")) {
+    res <- list( fit = fit$SDF, map = map, perf = data.frame(perf) )
   } else {
-    res <- list(
-      fit = fit,
-      map = map,
-      perf = data.frame(perf)
-    )
+    res <- list( fit = fit, map = map, perf = data.frame(perf) )
   }
   class(res) <- c(class(res), 'dissever')
   return(res)
