@@ -402,8 +402,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       lat_res = lat
       unkcoordinates = SpatialPointsDataFrame(data.frame(lat_res, lon_res), data.frame(varaux), proj4string = CRS("+proj=longlat +datum=WGS84"))
       form = as.formula(paste("varr~",paste(names(varaux), collapse="+")))
-      #baux <- gwr.sel(form, data = datagwr, coords = coordinates, longlat=TRUE, adapt=TRUE)
-      model = gwr(form, data = datagwr, coords = coordinates, longlat = TRUE, adapt = 0.5, fit.points = unkcoordinates, predictions = TRUE)
+      baux <- bw.gwr(form, data = unkcoordinates, kernel="gaussian", longlat=TRUE, adaptive=TRUE)
+      model = gwr.basic(form, data = datagwr, regression.points = coordinates, longlat = TRUE, bw = baux, kernel="gaussian")
       if (verbose) message('| -- updating predictions')
       diss_result$diss = model$SDF$pred
     } else {
