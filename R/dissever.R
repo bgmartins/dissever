@@ -393,7 +393,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       if (verbose) message('| -- tuning GWR bandwidth')
       baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE)
       if (verbose) message('| -- updating model')
-      fit <- gwr.basic(form, data = datagwr, regression.points = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE)
+      fit <- gwr.predict(form, data = datagwr, predictdata = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE)
       if (verbose) message('| -- updating predictions')
       diss_result$diss = fit$SDF$pred
       print(fit$SDF)
