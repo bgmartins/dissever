@@ -365,8 +365,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     # Apply adjustement and replace the current
     if ( !( data_type == "categorical" ) ) { diss_result$diss <- diss_result$adjust * diss_result$diss }
 
-
-
     # Sampling points
     # id_spl <- sample(1:nrow(fine_df), size = n_spl)
 
@@ -389,8 +387,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       lat = fine_df$y
       varaux = fine_df[id_spl, nm_covariates]
       varr = diss_result[id_spl, 'diss', drop = TRUE]
-      datagwr = data.frame(varr, varaux)
-      datagwr = SpatialPointsDataFrame(data.frame(lat_spl, lon_spl), data.frame(datagwr), proj4string = CRS("+proj=longlat +datum=WGS84"))
+      datagwr = SpatialPointsDataFrame(data.frame(lat_spl, lon_spl), data.frame(varr, varaux), proj4string = CRS("+proj=longlat +datum=WGS84"))
       coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), data.frame(lat, lon), proj4string = CRS("+proj=longlat +datum=WGS84"))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
@@ -399,16 +396,14 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       fit <- gwr.basic(form, data = datagwr, regression.points = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE)
       if (verbose) message('| -- updating predictions')
       diss_result$diss = fit$SDF$pred
+      head(fit$SDF)
+      message(diss_result$diss)
     } else {
             if (verbose) message('| -- updating predictions')
 	    diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
     }
-
     if (data_type == 'count') { diss_result$diss[diss_result$diss < 0.0] <- 0 }
-
     if (verbose) message('| -- computing aggregates of predictions on coarse grid')
-
-    # Aggregate average prediction on coarse grid
     summary_metric <- function( data, type ) {
       if (type == 'count') { return( sum(data) ) }
       if (type == 'categorical') { return( median(data) ) }
