@@ -134,7 +134,7 @@ edgeroi$categorical <- reclassify(edgeroi$carbon,m)
 res_rf_cat <- dissever(
     coarse = edgeroi$categorical, # coarse resolution raster
     fine = edgeroi$predictors, # stack of fine resolution covariates
-    method = "rf", # regression method used for disseveration
+    method = "rf", # classification method used for disseveration
     p = p_train, # proportion of pixels sampled for training regression model
     min_iter = min_iter, # minimum iterations
     max_iter = max_iter, # maximum iterations
