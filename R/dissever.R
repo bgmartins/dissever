@@ -285,9 +285,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
       dMat <- gw.dist(dp.locat=as.matrix(data.frame(lat_spl, lon_spl)), rp.locat=as.matrix(data.frame(lat_spl, lon_spl)), focus=0, longlat=TRUE)
-      baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE, dMat=dMat )
+      baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=FALSE, dMat=dMat )
       if (verbose) message('| -- updating model')
-      fit <- gwr.predict(form, data = datagwr, predictdata = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE)
+      fit <- gwr.predict(form, data = datagwr, predictdata = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=FALSE)
       if (verbose) message('| -- updating predictions')
       diss_result$diss = fit$SDF$prediction
     }
