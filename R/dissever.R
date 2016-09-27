@@ -41,7 +41,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 }
 
 # Computes the carret regression model between some coarse data and the stack of covariates
-.update_model <- function(x, y, method = 'rf', control, tune_grid, data_type="numeric"){
+.update_model <- function(x, y, method = 'rf', control, tune_grid, data_type="numeric") {
   # Pick the parameters of the model using error on the first run.
   # Then use the optimised parameters in the iteration loop to save on computing time.
   # Basically we just need to change the trainControl object to do that.
@@ -284,7 +284,10 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), data.frame(fine_df[nm_covariates]), proj4string = CRS(projection(fine)))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
-      baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE)
+      if (verbose) print(datagwr)
+      if (verbose) print(form)
+      # dMat <- gw.dist(dp.locat=data.frame(lat_spl, lon_spl), focus=5, longlat=TRUE)
+      baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE, dMat=dMat )
       if (verbose) message('| -- updating model')
       fit <- gwr.predict(form, data = datagwr, predictdata = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE)
       if (verbose) message('| -- updating predictions')
