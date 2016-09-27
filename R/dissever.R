@@ -224,6 +224,12 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     if (data_type != "count" && data_type != "numeric") {
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
+    lon_spl = fine_df[id_spl, 'x']
+    lat_spl = fine_df[id_spl, 'y']
+    lon = fine_df$x
+    lat = fine_df$y
+    #dMat1 <- gw.dist(dp.locat=as.matrix(data.frame(lon_spl, lat_spl)), rp.locat=as.matrix(data.frame(lon, lat)), focus=0, longlat=TRUE)
+    #dMat2 <- gw.dist(dp.locat=as.matrix(data.frame(lon_spl, lat_spl)), rp.locat=as.matrix(data.frame(lon_spl, lat_spl)), focus=0, longlat=TRUE)
   } else {
     fit <- .update_model( x = fine_df[id_spl, nm_covariates], y = y_aux, method = method, control = train_control_init, tune_grid = tune_grid, data_type = data_type )
     best_params <- fit$bestTune
@@ -284,8 +290,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       coordgwr = SpatialPointsDataFrame(data.frame(lon, lat), data.frame(fine_df[nm_covariates]), proj4string = CRS(projection(fine)))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
-      dMat1 <- gw.dist(dp.locat=as.matrix(data.frame(lat, lon)), rp.locat=as.matrix(data.frame(lat_spl, lon_spl)), focus=0, longlat=TRUE)
-      dMat2 <- gw.dist(dp.locat=as.matrix(data.frame(lat_spl, lon_spl)), rp.locat=as.matrix(data.frame(lat_spl, lon_spl)), focus=0, longlat=TRUE)
+      dMat1 <- gw.dist(dp.locat=as.matrix(data.frame(lon_spl, lat_spl)), rp.locat=as.matrix(data.frame(lon, lat)), focus=0, longlat=TRUE)
+      dMat2 <- gw.dist(dp.locat=as.matrix(data.frame(lon_spl, lat_spl)), rp.locat=as.matrix(data.frame(lon_spl, lat_spl)), focus=0, longlat=TRUE)
       baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=FALSE, dMat=dMat2 )
       if (verbose) message('| -- updating model')
       fit <- gwr.predict(form, data = datagwr, predictdata = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=FALSE, dMat1=dMat1 , dMat2=dMat2 )
