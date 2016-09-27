@@ -280,12 +280,12 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       lat = fine_df$y
       varaux = fine_df[id_spl, nm_covariates]
       varr = diss_result[id_spl, 'diss', drop = TRUE]
-      datagwr = SpatialPointsDataFrame(data.frame(lat_spl, lon_spl), data.frame(varr, varaux), proj4string = CRS(projection(fine)))
-      coordgwr = SpatialPointsDataFrame(data.frame(lat, lon), data.frame(fine_df[nm_covariates]), proj4string = CRS(projection(fine)))
+      datagwr = SpatialPointsDataFrame(data.frame(lon_spl, lat_spl), data.frame(varr, varaux), proj4string = CRS(projection(fine)))
+      coordgwr = SpatialPointsDataFrame(data.frame(lon, lat), data.frame(fine_df[nm_covariates]), proj4string = CRS(projection(fine)))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
-      dMat <- gw.dist(dp.locat=as.matrix(data.frame(lat, lon)), rp.locat=as.matrix(data.frame(lat_spl, lon_spl)), focus=0, longlat=TRUE)
-      baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE, dMat=dMat )
+      #dMat <- gw.dist(dp.locat=as.matrix(data.frame(lat, lon)), rp.locat=as.matrix(data.frame(lat_spl, lon_spl)), focus=0, longlat=TRUE)
+      baux <- 5 #bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE, dMat=dMat )
       if (verbose) message('| -- updating model')
       fit <- gwr.predict(form, data = datagwr, predictdata = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE)
       if (verbose) message('| -- updating predictions')
