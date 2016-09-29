@@ -5,6 +5,7 @@ import(raster)
 import(dplyr)
 import(sp)
 import(parallel)
+import(bigmemory)
 
 importFrom(plyr, aaply)
 
