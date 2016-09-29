@@ -117,6 +117,14 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   }
   as.numeric( res )
 }
+  
+.gw.dist<- function(dp.locat, rp.locat ) {
+   n.rp<-length(rp.locat[,1])
+   n.dp<-length(dp.locat[,1])
+   dist.res <- matrix(numeric(n.rp*n.dp) , nrow=n.dp )
+   for (i in 1:n.rp) dist.res[,i]<-spDistsN1(dp.locat, matrix(rp.locat[i,],nrow=1),longlat=longlat)
+   dist.res
+}
 
 .dissever <- function(
     coarse,
@@ -284,8 +292,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       coordgwr = SpatialPointsDataFrame(data.frame(lon, lat), data.frame(fine_df[nm_covariates]), proj4string = CRS(projection(fine)))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
-      dMat1 <- gw.dist(dp.locat=as.matrix(data.frame(lon_spl, lat_spl)), rp.locat=as.matrix(data.frame(lon, lat)), focus=0, longlat=TRUE)
-      dMat2 <- gw.dist(dp.locat=as.matrix(data.frame(lon_spl, lat_spl)), rp.locat=as.matrix(data.frame(lon_spl, lat_spl)), focus=0, longlat=TRUE)
+      dMat1 <- .gw.dist(dp.locat=as.matrix(data.frame(lon_spl, lat_spl)), rp.locat=as.matrix(data.frame(lon, lat)) )
+      dMat2 <- .gw.dist(dp.locat=as.matrix(data.frame(lon_spl, lat_spl)), rp.locat=as.matrix(data.frame(lon_spl, lat_spl)) )
       baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE, dMat=dMat2 )
       if (verbose) message('| -- updating model')
       fit <- gwr.predict(form, data = datagwr, predictdata = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE, dMat1=dMat1 , dMat2=dMat2 )
