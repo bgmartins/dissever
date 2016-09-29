@@ -1,6 +1,6 @@
 ---
 title: "Dissever Tutorial"
-author: "Malone, B. and Roudier, P. and Martins, B. and Monteiro, J."
+author: "Malone, B. and Roudier, P. and Martins, B. and Monteiro, J. and Ribeiro, C."
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
