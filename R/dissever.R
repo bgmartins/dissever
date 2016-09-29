@@ -121,8 +121,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 .gw.dist<- function(dp.locat, rp.locat ) {
    n.rp<-length(rp.locat[,1])
    n.dp<-length(dp.locat[,1])
-   dist.res <- matrix(numeric(n.rp*n.dp) , nrow=n.dp )
-   for (i in 1:n.rp) dist.res[,i]<-spDistsN1(dp.locat, matrix(rp.locat[i,],nrow=1),longlat=longlat)
+   dist.res <- big.matrix(nrow=n.dp , ncol=n.rp) # matrix(numeric(n.rp*n.dp) , nrow=n.dp )
+   for (i in 1:n.rp) dist.res[,i]<-spDistsN1(dp.locat, matrix(rp.locat[i,],nrow=1),longlat=TRUE)
    dist.res
 }
 
