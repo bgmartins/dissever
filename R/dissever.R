@@ -50,7 +50,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( method == 'gwrm' ) { 
     form = as.formula(paste("x~",paste(names(x), collapse="+")))
     fit <- gw( form , data= data.frame( x , x=y_aux ) )
-  elif ( method == 'lme' ) { 
+  } else if ( method == 'lme' ) { 
     form = as.formula(paste("x~",paste(names(x), collapse="+")))
     fit <- lme( fixed=form , data= data.frame( x , x=y_aux ) , random = ~ 1 | dummy, method = "ML" )
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
