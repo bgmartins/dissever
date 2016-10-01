@@ -118,7 +118,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     }
   } else {
     if (is.null(boot)) { 
-      res <- predict( object=fit, newdata=data) 
+      res <- predict( fit, data) 
     } else {
       res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
     }
