@@ -118,10 +118,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     }
   } else {
     if (is.null(boot)) { 
-        print("***************")
-        print(fit)
-        print("***************")        
-      res <- predict(fit, data) 
+      # if ( is(fit, GWRM) ) 
+      res <- predict.gw(fit, data) 
     } else {
       res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
     }
