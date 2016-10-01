@@ -52,7 +52,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     fit <- gw( form , data= data.frame( x , x=y_aux ) )
   } else if ( method == 'lme' ) { 
     form = as.formula(paste("x~",paste(names(x), collapse="+")))
-    fit <- lme( fixed=form , data= data.frame( x , x=y_aux ) , random = ~ 1 | dummy, method = "ML" )
+    fit <- lme( fixed=form , data= data.frame( x , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
   } else fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
