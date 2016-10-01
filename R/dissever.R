@@ -47,7 +47,10 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   # Basically we just need to change the trainControl object to do that.
   y_aux = y
   if ( data_type == 'categorical' ) { y_aux = factor( y_aux ) }
-  fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
+  if ( method == 'gwrm' ) { 
+    form = as.formula(paste("x~",paste(names(y_aux), collapse="+")))
+    fit <- gw( form , data= data.frame( x , y_aux ) )
+  } else  fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
 }
 
@@ -62,7 +65,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   boot_samples <- boot(df, function(data, idx, method = reg_method) {
     bootstrap_df <- data[idx, ]
     # if ( data_type == "categorical" ) { bootstrap_df <- factor(bootstrap_df) }
-    bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
+    if ( method == 'gwrm' ) bootstrap_fit <- gw(.outcome ~ ., data = bootstrap_df )
+    else bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
     # generate predictions
     predict(bootstrap_fit, fine_df)
   }, n)
