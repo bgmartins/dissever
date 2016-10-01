@@ -111,16 +111,18 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     if (n_workers < 1) stop('Wrong split vector')
     res <- foreach( i = 0:(n_workers - 1), .combine = c, .packages = 'caret' ) %dopar% {
       if (is.null(boot)) { 
-        print("***************")
-        print(fit)
-        print("***************")        
         predict(fit, newdata = data[split == i, ]) 
       } else {
         .bootstrap_ci(fit = fit, fine_df = data[split == i, ], level = level, n = boot, data_type=data_type)
       }
     }
   } else {
-    if (is.null(boot)) { res <- predict(fit, data) } else {
+    if (is.null(boot)) { 
+        print("***************")
+        print(fit)
+        print("***************")        
+      res <- predict(fit, data) 
+    } else {
       res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
     }
   }
