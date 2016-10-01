@@ -121,7 +121,7 @@ res_rlm <- dissever(
 )
 
 # Boosted Linear Model
-res_rlm <- dissever(
+res_bstlm <- dissever(
   coarse = edgeroi$carbon, 
   fine = edgeroi$predictors, 
   method = "BstLm", 
@@ -131,7 +131,7 @@ res_rlm <- dissever(
 )
 
 # Conditional Inference Random Forest
-res_rlm <- dissever(
+res_cforest <- dissever(
   coarse = edgeroi$carbon, 
   fine = edgeroi$predictors, 
   method = "cforest", 
@@ -141,7 +141,7 @@ res_rlm <- dissever(
 )
 
 # Independent Component Regression
-res_rlm <- dissever(
+res_icr <- dissever(
   coarse = edgeroi$carbon, 
   fine = edgeroi$predictors, 
   method = "icr", 
@@ -151,7 +151,7 @@ res_rlm <- dissever(
 )
 
 # Parallel Random Forest
-res_rlm <- dissever(
+res_parrf <- dissever(
   coarse = edgeroi$carbon, 
   fine = edgeroi$predictors, 
   method = "parRF", 
@@ -161,7 +161,7 @@ res_rlm <- dissever(
 )
 
 # Quantile Random Forest
-res_rlm <- dissever(
+res_qrf <- dissever(
   coarse = edgeroi$carbon, 
   fine = edgeroi$predictors, 
   method = "qrf", 
