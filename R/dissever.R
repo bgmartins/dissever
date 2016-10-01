@@ -50,7 +50,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( method == 'gwrm' ) { 
     form = as.formula(paste("x~",paste(names(x), collapse="+")))
     fit <- gw( form , data= data.frame( x , x=y_aux ) )
-    print(fit)
   } else fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
 }
@@ -111,7 +110,12 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     n_workers <- length(unique(split))
     if (n_workers < 1) stop('Wrong split vector')
     res <- foreach( i = 0:(n_workers - 1), .combine = c, .packages = 'caret' ) %dopar% {
-      if (is.null(boot)) { predict(fit, newdata = data[split == i, ]) } else {
+      if (is.null(boot)) { 
+        print("***************")
+        print(fit)
+        print("***************")        
+        predict(fit, newdata = data[split == i, ]) 
+      } else {
         .bootstrap_ci(fit = fit, fine_df = data[split == i, ], level = level, n = boot, data_type=data_type)
       }
     }
