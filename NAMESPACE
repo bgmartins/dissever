@@ -6,6 +6,7 @@ import(dplyr)
 import(sp)
 import(parallel)
 import(bigmemory)
+import(nlme)
 import(GWRM)
 
 importFrom(plyr, aaply)
