@@ -27,6 +27,7 @@ Imports:
     magrittr,
     viridis,
     GWmodel,
+    GWRM,
     bigmemory
 Suggests:
     knitr,
