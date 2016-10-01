@@ -48,11 +48,10 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   y_aux = y
   if ( data_type == 'categorical' ) { y_aux = factor( y_aux ) }
   if ( method == 'gwrm' ) { 
-    aux = head( data.frame( x , x=y_aux ) )
-    print(aux)
     form = as.formula(paste("x~",paste(names(x), collapse="+")))
     fit <- gw( form , data= data.frame( x , x=y_aux ) )
-  } else  fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
+    print(fit)
+  } else fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
 }
 
