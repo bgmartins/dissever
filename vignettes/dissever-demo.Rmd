@@ -33,15 +33,20 @@ plot(edgeroi$predictors, col = viridis(100))
 
 ## Example
 
-In this section, we will dissever the sample datasetwith the available environmental covariates, using 6 different learning methods: 
+In this section, we will dissever the sample datasetwith the available environmental covariates, using different learning methods: 
 
-* Random Forest (`"rf"`)
+* Random Forest (`"rf"`) and Parallel Random Forest (`"parRF"`)
 * Cubist (`"cubist"`)
 * Generalized Additive Model using Splines (`"gamSpline"`)
 * Linear Model (`"lm"`)
 * Multivariate Adaptive Regression Spline (`"earth"`)
-* Geographically Weighted Regression (`"gwr"`)
 * Robust Regression (`"rlm"`)
+* Boosted Linear Model (`"BstLm"`)
+* Conditional Inference Random Forest (`"cforest"`)
+* Independent Component Regression (`"icr"`)
+* Quantile Random Forest (`"qrf"`)
+* Generalized Waring Regression Model for Count Data (`"gwrm"`)
+* Geographically Weighted Regression (`"gwr"`)
 
 It is simple to switch between regression/classification methods using the `method` option of `dissever`.
 
@@ -105,21 +110,71 @@ res_earth <- dissever(
   max_iter = max_iter
 )
 
-# Geographically Weighted Regression
-res_gwr <- dissever(
-  coarse = edgeroi$carbon, 
-  fine = edgeroi$predictors, 
-  method = "gwr", 
-  p = p_train, 
-  min_iter = min_iter,
-  max_iter = max_iter
-)
-
 # Robust Regression
 res_rlm <- dissever(
   coarse = edgeroi$carbon, 
   fine = edgeroi$predictors, 
   method = "rlm", 
+  p = p_train, 
+  min_iter = min_iter,
+  max_iter = max_iter
+)
+
+# Boosted Linear Model
+res_rlm <- dissever(
+  coarse = edgeroi$carbon, 
+  fine = edgeroi$predictors, 
+  method = "BstLm", 
+  p = p_train, 
+  min_iter = min_iter,
+  max_iter = max_iter
+)
+
+# Conditional Inference Random Forest
+res_rlm <- dissever(
+  coarse = edgeroi$carbon, 
+  fine = edgeroi$predictors, 
+  method = "cforest", 
+  p = p_train, 
+  min_iter = min_iter,
+  max_iter = max_iter
+)
+
+# Independent Component Regression
+res_rlm <- dissever(
+  coarse = edgeroi$carbon, 
+  fine = edgeroi$predictors, 
+  method = "icr", 
+  p = p_train, 
+  min_iter = min_iter,
+  max_iter = max_iter
+)
+
+# Parallel Random Forest
+res_rlm <- dissever(
+  coarse = edgeroi$carbon, 
+  fine = edgeroi$predictors, 
+  method = "parRF", 
+  p = p_train, 
+  min_iter = min_iter,
+  max_iter = max_iter
+)
+
+# Quantile Random Forest
+res_rlm <- dissever(
+  coarse = edgeroi$carbon, 
+  fine = edgeroi$predictors, 
+  method = "qrf", 
+  p = p_train, 
+  min_iter = min_iter,
+  max_iter = max_iter
+)
+
+# Geographically Weighted Regression
+res_gwr <- dissever(
+  coarse = edgeroi$carbon, 
+  fine = edgeroi$predictors, 
+  method = "gwr", 
   p = p_train, 
   min_iter = min_iter,
   max_iter = max_iter
