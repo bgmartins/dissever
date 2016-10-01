@@ -28,6 +28,7 @@ Imports:
     viridis,
     GWmodel,
     GWRM,
+    nlme,
     bigmemory
 Suggests:
     knitr,
