@@ -228,6 +228,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if (!is.null(nmax) && nmax > 0) {  n_spl <- min(n_spl, nmax) }
 
   id_spl <- spsample( x = as(fine, 'SpatialGridDataFrame') , type='regular' , n = n_spl ) # sample grid cells
+  id_spl <- data.frame(id_spl)
   print(id_spl)
                              
   # id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
