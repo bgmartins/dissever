@@ -33,7 +33,7 @@ plot(edgeroi$predictors, col = viridis(100))
 
 ## Example
 
-In this section, we will dissever the sample datasetwith the available environmental covariates, using different learning methods: 
+In this section, we will dissever the sample dataset with the available environmental covariates, using different learning methods: 
 
 * Random Forest (`"rf"`) and Parallel Random Forest (`"parRF"`)
 * Cubist (`"cubist"`)
