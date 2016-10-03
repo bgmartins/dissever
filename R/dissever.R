@@ -255,10 +255,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     }
   } else {
     fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = y_aux, method = method, control = train_control_init, tune_grid = tune_grid, data_type = data_type , latLong=data.frame( long=fine_df$x[id_spl] , lat=fine_df$y[id_spl] ) )
-    if (verbose) {
-      message("Model parameters:")
-      print(fit)
-    }
     best_params <- fit$bestTune
     if (verbose) {
       best_params_str <- paste( lapply(names(best_params), function(x) paste(x, " = ", best_params[[x]], sep = "")), collapse = ", ")
