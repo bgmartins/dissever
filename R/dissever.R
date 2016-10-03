@@ -251,7 +251,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
   } else {
-    fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = y_aux, method = method, control = train_control_init, tune_grid = tune_grid, data_type = data_type , latLong=data.frame( long=fine_df$x[id_spl,] , lat=fine_df$y[id_spl,] ) )
+    fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = y_aux, method = method, control = train_control_init, tune_grid = tune_grid, data_type = data_type , latLong=data.frame( long=fine_df$x[id_spl] , lat=fine_df$y[id_spl] ) )
     best_params <- fit$bestTune
     if (verbose) {
       best_params_str <- paste( lapply(names(best_params), function(x) paste(x, " = ", best_params[[x]], sep = "")), collapse = ", ")
@@ -296,7 +296,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     # Update model and update dissever predictions on fine grid
     if( method != 'gwr' ) {
       if (verbose) message('| -- updating model')
-      fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type , latLong=data.frame( long=fine_df$x[id_spl,] , lat=fine_df$y[id_spl] ))
+      fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type , latLong=data.frame( long=fine_df$x[id_spl] , lat=fine_df$y[id_spl] ))
       if (verbose) message('| -- updating predictions')
       if ( method == 'lme' ) diss_result$diss <- .predict_map(fit=fit,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = NULL, data_type=data_type, latLong=data.frame( long=fine_df$x , lat=fine_df$y ))
       else diss_result$diss <- .predict_map(fit=fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
