@@ -51,7 +51,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     fit <- gw( as.formula(paste("x~",paste(names(vars), collapse="+"))) , data= data.frame( vars , x=y_aux ) )
   } else if ( method == 'lme' ) {
     fit <- data.frame( vars , out=y_aux , lat=latLong$lat , long=latLong$long , dummy=rep.int( 1 , length(y_aux) ) )
-    fit <- lme( fixed=out ~ . - dummy - lat - long , data=fit , random = ~ 1 | dummy, method = "ML" , correlation = corGaus(form = ~ lat+long | dummy ) )
+    fit <- lme( fixed=out ~ . - dummy - lat - long , data=fit , random = ~ 1 | dummy, correlation = corGaus(form = ~ lat+long | dummy ) )
   } else fit <- train( x = vars, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
 }
@@ -68,7 +68,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     bootstrap_df <- data[idx, ]
     # if ( data_type == "categorical" ) { bootstrap_df <- factor(bootstrap_df) }
     if ( method == 'gwrm' ) bootstrap_fit <- gw(.outcome ~ ., data = bootstrap_df )
-    else if ( method == 'lme' ) bootstrap_fit <- lme( fixed=.outcome ~ . - dummy - lat - long , data=data.frame( bootstrap_df , lat=latLong$lat[idx], lat=latLong$long[idx], dummy=rep.int( 1 , nrow(bootstrap_df) ) ) , random = ~ 1 | dummy, method = "ML" , correlation = corGaus(form = ~ lat+long | dummy ) )
+    else if ( method == 'lme' ) bootstrap_fit <- lme( fixed=.outcome ~ . - dummy - lat - long , data=data.frame( bootstrap_df , lat=latLong$lat[idx], lat=latLong$long[idx], dummy=rep.int( 1 , nrow(bootstrap_df) ) ) , random = ~ 1 | dummy, correlation = corGaus(form = ~ lat+long | dummy ) )
     else bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
     # generate predictions
     if ( method == 'lme' ) predict(bootstrap_fit, data.frame(fine_df,latLong,dummy=rep.int(1,nrow(fine_df))) )
@@ -304,10 +304,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     if( method != 'gwr' ) {
       if (verbose) message('| -- updating model')
       fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type , latLong=data.frame( long=fine_df$x[id_spl] , lat=fine_df$y[id_spl] ))
-      if (verbose) {
-        message("Model parameters:")
-        print(fit)
-      }
       if (verbose) message('| -- updating predictions')
       if ( method == 'lme' ) diss_result$diss <- .predict_map(fit=fit,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = NULL, data_type=data_type, latLong=data.frame( long=fine_df$x , lat=fine_df$y ))
       else diss_result$diss <- .predict_map(fit=fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
