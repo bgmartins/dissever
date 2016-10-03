@@ -52,8 +52,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     form = as.formula(paste("x~",paste(names(x), collapse="+")))
     fit <- gw( form , data= data.frame( x , x=y_aux ) )
   } else if ( method == 'lme' ) {
-    fit <- lme( fixed=as.formula("x~Doserate+Elevation+Panchromat+Slope+TWI") , data=data.frame( x , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
-    print(fit)
+    fit <- lme( fixed=as.formula(paste("x~",paste(names(x), collapse="+")) , data=data.frame( x , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
   } else fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
@@ -123,7 +122,10 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     }
   } else {
     if (is.null(boot)) { 
-      res <- predict( fit, data) 
+      if ( method == 'lme' ) {
+        data[['dummy']] <- rep.int(1,length(data))
+        res <- predict( fit, data ) 
+      } else res <- predict( fit, data ) 
     } else {
       res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
     }
