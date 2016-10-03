@@ -209,7 +209,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   } 
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
-  print(head(fine_df))
   # Add coarse cell ID to fine data.frame
   fine_df[['cell']] <- as.integer(.create_lut_fine(ids_coarse, fine))
   ids_coarse2 <- raster(coarse)
@@ -224,7 +223,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   )
   coarse_df <- na.exclude(coarse_df)
   fine_df <- na.exclude(fine_df)
-  fine_df[['cell3']] <- 1:length(fine_df)
+  fine_df[['cell3']] <- 1:nrows(fine_df)
   if (is.null(p)) { p = as.numeric( nrow( coarse_df ) / nrow(fine_df) ) }
   # Sub-sample for modelling
   n_spl <- ceiling(nrow(fine_df) * p)
