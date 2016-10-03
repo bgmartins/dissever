@@ -298,7 +298,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       if (verbose) message('| -- updating model')
       fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type , latLong=data.frame( long=fine_df[id_spl,x] , lat=fine_df[id_spl,y] ))
       if (verbose) message('| -- updating predictions')
-      if ( method == 'lme' ) diss_result$diss <- .predict_map(fit=fit,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = NULL, data_type=data_type, latLong=data.frame( long=fine_df[,x] , lat=fine_df[,y] ))
+      if ( method == 'lme' ) diss_result$diss <- .predict_map(fit=fit,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = NULL, data_type=data_type, latLong=data.frame( long=fine_df[,'x'] , lat=fine_df[,'y'] ))
       else diss_result$diss <- .predict_map(fit=fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
     } else {
       varaux = fine_df[id_spl, nm_covariates]
@@ -366,7 +366,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   }
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
   if( method == 'gwr' ) { map <- fit$SDF$prediction } else {
-    if ( method == 'lme' ) map <- .predict_map(fit=best_model,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = boot, level = level, data_type=data_type, latLong=data.frame( long=fine_df[,x] , lat=fine_df[,y] ))
+    if ( method == 'lme' ) map <- .predict_map(fit=best_model,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = boot, level = level, data_type=data_type, latLong=data.frame( long=fine_df[,'x'] , lat=fine_df[,'y'] ))
     else map <- .predict_map(fit=best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
   }
   if (data_type == 'count') { map[map < 0.0] <- 0 }
