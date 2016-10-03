@@ -20,8 +20,10 @@
 
 \item{method}{a string specifying which classification or regression model to use (via the caret package). Possible values are found using names(caret::getModelInfo()).}
 
-\item{p}{numeric, proportion of the fine map that is sampled for fitting the dissever model (between 0 and 1, defaults to 0.5)}
+\item{p}{numeric proportion of the fine map that is sampled for fitting the dissever model (between 0 and 1, defaults to 0.5)}
 
+\item{sample_method}{string specifying the method used for sampling the fine map through the spsample function}
+         
 \item{nmax}{numeric maximum number of pixels selected for fitting the dissever model. It will override the number of pixels chosen by the \code{p} option if that number is over the value passed to \code{nmax}.}
 
 \item{thresh}{numeric, dissever iterations will proceed until the RMSE of the dissever model reaches this value, or until the maximum number of iterations is met (defaults to 0.01)}
