@@ -51,7 +51,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     fit <- gw( as.formula(paste("x~",paste(names(vars), collapse="+"))) , data= data.frame( vars , x=y_aux ) )
   } else if ( method == 'lme' ) {
     fit <- lme( fixed=as.formula("x ~ . - dummy - lat - long") , data=data.frame( vars , latLong, x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" , correlation = corGaus(form = ~ lat+long | dummy ) )
-    print(fit)
   } else fit <- train( x = vars, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
 }
@@ -118,8 +117,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     n_workers <- length(unique(split))
     if (n_workers < 1) stop('Wrong split vector')
     res <- foreach( i = 0:(n_workers - 1), .combine = c, .packages = 'caret' ) %dopar% {
-      if (is.null(boot)) { 
-        res <- predict(object=fit , newdata = data[split == i, ])
+      if (is.null(boot)) {
+        if (! is.null(latLong) ) res <- predict(object=fit , newdata = data.frame(data,latLong)[split == i, ])
+        else res <- predict(object=fit , newdata = data[split == i, ])
         if ( !is.null( nrow(res) ) ) res <- res[,1]
         as.numeric( res )
       } else {
