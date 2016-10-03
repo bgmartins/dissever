@@ -50,6 +50,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( method == 'gwrm' ) { 
     form = as.formula(paste("x~",paste(names(vars), collapse="+")))
     fit <- gw( form , data= data.frame( vars , x=y_aux ) )
+    print(fit)
   } else if ( method == 'lme' ) {
     fit <- lme( fixed=as.formula("x ~ . - dummy") , data=data.frame( vars , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
@@ -69,9 +70,11 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     bootstrap_df <- data[idx, ]
     # if ( data_type == "categorical" ) { bootstrap_df <- factor(bootstrap_df) }
     if ( method == 'gwrm' ) bootstrap_fit <- gw(.outcome ~ ., data = bootstrap_df )
+    else if ( method == 'lme' ) bootstrap_fit <- lme( fixed=as.formula(".outcome ~ . - dummy") , data=data.frame( bootstrap_df , dummy=rep.int( 1 , nrow(bootstrap_df) ) ) , random = ~ 1 | dummy, method = "ML" )
     else bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
     # generate predictions
-    predict(bootstrap_fit, fine_df)
+    if ( method == 'lme' ) predict(bootstrap_fit, data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))) )
+    else predict(bootstrap_fit, fine_df)
   }, n)
   # If level is a number < 1, or instead if level is a function
   if (is.numeric(level)) {
@@ -228,7 +231,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( is.null(sample_method) || sample_method == 'random' ) id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
   else {
     id_spl <- SpatialPixelsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df,cell3=1:nrow(fine_df)), proj4string = CRS(projection(fine)))
-    id_spl <- over( spsample( x = id_spl , type=sample_method , n = n_spl ) , id_spl , fn = mean )$cell3 # sample grid cells  
+    id_spl <- over( spsample( x = id_spl , type=sample_method , n = n_spl ) , id_spl , fn = median )$cell3 # sample grid cells  
   }
   if (verbose) message('Selecting best model parameters')
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
