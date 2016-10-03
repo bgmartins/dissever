@@ -50,7 +50,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( method == 'gwrm' ) { 
     form = as.formula(paste("x~",paste(names(vars), collapse="+")))
     fit <- gw( form , data= data.frame( vars , x=y_aux ) )
-    print(fit)
   } else if ( method == 'lme' ) {
     fit <- lme( fixed=as.formula("x ~ . - dummy") , data=data.frame( vars , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
@@ -123,8 +122,10 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       }
     }
   } else {
-    if (is.null(boot)) res <- predict( fit, data ) 
-    else res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
+    if (is.null(boot)) {
+      predict(fit)
+      res <- predict( fit, data ) 
+    } else res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
   }
   as.numeric( res )
 }
