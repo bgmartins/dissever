@@ -51,7 +51,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     form = as.formula(paste("x~",paste(names(vars), collapse="+")))
     fit <- gw( form , data= data.frame( vars , x=y_aux ) )
   } else if ( method == 'lme' ) {
-    fit <- lme( fixed=as.formula("x~ Doserate+Elevation+Panchromat+Slope+TWI") , data=data.frame( vars , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
+    fit <- lme( fixed=as.formula("~ . - x - dummy") , data=data.frame( vars , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
   } else fit <- train( x = vars, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
@@ -226,7 +226,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( !is.null(nmax) && nmax > 0 ) {  n_spl <- min(n_spl, nmax) }
                              
   id_spl <- SpatialPointsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
-  id_spl <- over( id_spl , spsample( x = id_spl , type='regular' , n = n_spl ) , returnList = TRUE ) # sample grid cells  
+  id_spl <- over( spsample( x = id_spl , type='regular' , n = n_spl ) , id_spl , returnList = TRUE ) # sample grid cells  
   id_spl <- id_spl$cell3
   print(id_spl)
 
