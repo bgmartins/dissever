@@ -8,7 +8,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 
 # simple wrapper around raster::as.data.frame that handles categorical data columns correctly
 .as_data_frame_factors <- function(x, ...) {
-  res <- as.data.frame(x, ...)
+  res <- as.data.frame(spTransform(x, CRS(x)), ...)
   if (any(is.factor(x))) {
     # Get names of original stack (not affected by bug)
     nm <- names(x)
@@ -223,7 +223,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   )
   coarse_df <- na.exclude(coarse_df)
   fine_df <- na.exclude(fine_df)
-  fine_df[['cell3']] <- 1:nrows(fine_df)
+  fine_df[['cell3']] <- 1:nrow(fine_df)
   if (is.null(p)) { p = as.numeric( nrow( coarse_df ) / nrow(fine_df) ) }
   # Sub-sample for modelling
   n_spl <- ceiling(nrow(fine_df) * p)
