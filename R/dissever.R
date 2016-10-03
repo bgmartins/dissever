@@ -226,7 +226,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( !is.null(nmax) && nmax > 0 ) {  n_spl <- min(n_spl, nmax) }
                              
   id_spl <- SpatialPixelsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
-  id_spl <- over( id_spl , spsample( x = id_spl , type='regular' , n = n_spl ) , fn = mean ) # sample grid cells  
+  id_spl <- over( spsample( x = id_spl , type='regular' , n = n_spl ) , id_spl , fn = mean ) # sample grid cells  
+  print(id_spl)
   id_spl <- id_spl$cell3
   print(id_spl)
 
