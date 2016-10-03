@@ -42,20 +42,19 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 }
 
 # Computes the carret regression model between some coarse data and the stack of covariates
-.update_model <- function(x, y, method = 'rf', control, tune_grid, data_type="numeric") {
+.update_model <- function(data, y, method = 'rf', control, tune_grid, data_type="numeric") {
   # Pick the parameters of the model using error on the first run.
   # Then use the optimised parameters in the iteration loop to save on computing time.
   # Basically we just need to change the trainControl object to do that.
   y_aux = y
   if ( data_type == 'categorical' ) { y_aux = factor( y_aux ) }
   if ( method == 'gwrm' ) { 
-    form = as.formula(paste("x~",paste(names(x), collapse="+")))
-    fit <- gw( form , data= data.frame( x , x=y_aux ) )
+    form = as.formula(paste("x~",paste(names(data), collapse="+")))
+    fit <- gw( form , data= data.frame( data , x=y_aux ) )
   } else if ( method == 'lme' ) {
-    form = as.formula(paste("x~",paste(names(x), collapse="+")))
-    fit <- lme( fixed=form , data=data.frame( x , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
+    fit <- lme( fixed=as.formula(paste("x~",paste(names(data), collapse="+"))) , data=data.frame( data , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
-  } else fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
+  } else fit <- train( x = data, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
 }
 
