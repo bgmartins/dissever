@@ -111,21 +111,20 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 }
 
 .predict_map <- function(fit, data, split = NULL, boot = NULL, level = 0.9, data_type="numeric") {
+  print(fit)
   if (.has_parallel_backend()) {
     n_workers <- length(unique(split))
     if (n_workers < 1) stop('Wrong split vector')
     res <- foreach( i = 0:(n_workers - 1), .combine = c, .packages = 'caret' ) %dopar% {
       if (is.null(boot)) { 
-        predict(fit, newdata = data[split == i, ]) 
+        predict(object=fit , newdata = data[split == i, ]) 
       } else {
         .bootstrap_ci(fit = fit, fine_df = data[split == i, ], level = level, n = boot, data_type=data_type)
       }
     }
   } else {
-    if (is.null(boot)) {
-      predict(fit)
-      res <- predict( fit, data ) 
-    } else res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
+    if (is.null(boot)) res <- predict( object=fit , newdata=data ) 
+    else res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
   }
   as.numeric( res )
 }
@@ -294,8 +293,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       if (verbose) message('| -- updating model')
       fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type )
       if (verbose) message('| -- updating predictions')
-      if ( method == 'lme' ) diss_result$diss <- .predict_map(fit,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = NULL, data_type=data_type)
-      else diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
+      if ( method == 'lme' ) diss_result$diss <- .predict_map(fit=fit,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = NULL, data_type=data_type)
+      else diss_result$diss <- .predict_map(fit=fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
     } else {
       varaux = fine_df[id_spl, nm_covariates]
       varr = diss_result[id_spl, 'diss', drop = TRUE]
@@ -362,8 +361,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   }
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
   if( method == 'gwr' ) { map <- fit$SDF$prediction } else {
-    if ( method == 'lme' ) map <- .predict_map(best_model,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = boot, level = level, data_type=data_type)
-    else map <- .predict_map(best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
+    if ( method == 'lme' ) map <- .predict_map(fit=best_model,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = boot, level = level, data_type=data_type)
+    else map <- .predict_map(fit=best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
   }
   if (data_type == 'count') { map[map < 0.0] <- 0 }
   map <- rasterFromXYZ( data.frame( diss_result[, c('x', 'y')], diss = map ), res = res(fine), crs = projection(fine) )
