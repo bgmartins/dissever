@@ -112,21 +112,19 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 
 .predict_map <- function(fit, data, split = NULL, boot = NULL, level = 0.9, data_type="numeric") {
   if (.has_parallel_backend()) {
-    print("*************")
     n_workers <- length(unique(split))
     if (n_workers < 1) stop('Wrong split vector')
     res <- foreach( i = 0:(n_workers - 1), .combine = c, .packages = 'caret' ) %dopar% {
       if (is.null(boot)) { 
-        predict(object=fit , newdata = data[split == i, ]) 
+        predict(object=fit , newdata = data[split == i, ])[,1]
       } else {
         .bootstrap_ci(fit = fit, fine_df = data[split == i, ], level = level, n = boot, data_type=data_type)
       }
     }
   } else {
-    print("++++++++++")
     aux = predict( object=fit , newdata=data )
-    print(aux)
-    if (is.null(boot)) res <- predict( object=fit , newdata=data ) 
+    print(head(aux))
+    if (is.null(boot)) res <- predict( object=fit , newdata=data )[,1] 
     else res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
   }
   as.numeric( res )
