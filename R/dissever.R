@@ -41,7 +41,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 }
 
 # Computes the carret regression model between some coarse data and the stack of covariates
-.update_model <- function(vars, y, method = 'rf', control, tune_grid, data_type="numeric") {
+.update_model <- function(vars, y, method = 'rf', control, tune_grid, data_type="numeric", latLong=NULL) {
   # Pick the parameters of the model using error on the first run.
   # Then use the optimised parameters in the iteration loop to save on computing time.
   # Basically we just need to change the trainControl object to do that.
@@ -50,7 +50,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( method == 'gwrm' ) { 
     fit <- gw( as.formula(paste("x~",paste(names(vars), collapse="+"))) , data= data.frame( vars , x=y_aux ) )
   } else if ( method == 'lme' ) {
-    fit <- lme( fixed=as.formula("x ~ . - dummy") , data=data.frame( vars , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" , correlation = corGaus(form = ~ lat+long | dummy ) )
+    fit <- lme( fixed=as.formula("x ~ . - dummy - lat - long") , data=data.frame( vars , latLong, x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" , correlation = corGaus(form = ~ lat+long | dummy ) )
   } else fit <- train( x = vars, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
 }
@@ -60,17 +60,17 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 .get_split_idx <- function(n, p) sort(1:n %% p)
 
 # Generates prediction intervals using bootstraping
-.bootstrap_ci <- function(fit, fine_df, level = 0.9, n = 50L, data_type="numeric" ) {
+.bootstrap_ci <- function(fit, fine_df, level = 0.9, n = 50L, data_type="numeric", latLong=NULL ) {
   df <- fit$trainingData
   reg_method <- fit$method
   boot_samples <- boot(df, function(data, idx, method = reg_method) {
     bootstrap_df <- data[idx, ]
     # if ( data_type == "categorical" ) { bootstrap_df <- factor(bootstrap_df) }
     if ( method == 'gwrm' ) bootstrap_fit <- gw(.outcome ~ ., data = bootstrap_df )
-    else if ( method == 'lme' ) bootstrap_fit <- lme( fixed=as.formula(".outcome ~ . - dummy") , data=data.frame( bootstrap_df , dummy=rep.int( 1 , nrow(bootstrap_df) ) ) , random = ~ 1 | dummy, method = "ML" )
+    else if ( method == 'lme' ) bootstrap_fit <- lme( fixed=as.formula(".outcome ~ . - dummy - lat - long") , data=data.frame( bootstrap_df , latLong[idx, ], dummy=rep.int( 1 , nrow(bootstrap_df) ) ) , random = ~ 1 | dummy, method = "ML" , correlation = corGaus(form = ~ lat+long | dummy ) )
     else bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
     # generate predictions
-    if ( method == 'lme' ) predict(bootstrap_fit, data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))) )
+    if ( method == 'lme' ) predict(bootstrap_fit, data.frame(fine_df,latLong,dummy=rep.int(1,nrow(fine_df))) )
     else { 
       res <- predict(bootstrap_fit, fine_df)
       if ( !is.null( nrow(res) ) ) res <- res[,1]
@@ -112,7 +112,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   res
 }
 
-.predict_map <- function(fit, data, split = NULL, boot = NULL, level = 0.9, data_type="numeric") {
+.predict_map <- function(fit, data, split = NULL, boot = NULL, level = 0.9, data_type="numeric", latLong=NULL) {
   if (.has_parallel_backend()) {
     n_workers <- length(unique(split))
     if (n_workers < 1) stop('Wrong split vector')
@@ -122,14 +122,14 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
         if ( !is.null( nrow(res) ) ) res <- res[,1]
         as.numeric( res )
       } else {
-        .bootstrap_ci(fit = fit, fine_df = data[split == i, ], level = level, n = boot, data_type=data_type)
+        .bootstrap_ci(fit = fit, fine_df = data[split == i, ], level = level, n = boot, data_type=data_type, latLong=latLong)
       }
     }
   } else {
     if (is.null(boot)) {      
       res <- predict( object=fit , newdata=data )
       if ( !is.null( nrow(res) ) ) res <- res[,1]
-    } else res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
+    } else res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type, latLong=latLong)
   }
   as.numeric( res )
 }
@@ -251,7 +251,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
   } else {
-    fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = y_aux, method = method, control = train_control_init, tune_grid = tune_grid, data_type = data_type )
+    fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = y_aux, method = method, control = train_control_init, tune_grid = tune_grid, data_type = data_type , latLong=data.frame( long=fine_df[id_spl,x] , lat=fine_df[id_spl,y] ) )
     best_params <- fit$bestTune
     if (verbose) {
       best_params_str <- paste( lapply(names(best_params), function(x) paste(x, " = ", best_params[[x]], sep = "")), collapse = ", ")
@@ -296,9 +296,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     # Update model and update dissever predictions on fine grid
     if( method != 'gwr' ) {
       if (verbose) message('| -- updating model')
-      fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type )
+      fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type , latLong=data.frame( long=fine_df[id_spl,x] , lat=fine_df[id_spl,y] ))
       if (verbose) message('| -- updating predictions')
-      if ( method == 'lme' ) diss_result$diss <- .predict_map(fit=fit,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = NULL, data_type=data_type)
+      if ( method == 'lme' ) diss_result$diss <- .predict_map(fit=fit,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = NULL, data_type=data_type, latLong=data.frame( long=fine_df[,x] , lat=fine_df[,y] ))
       else diss_result$diss <- .predict_map(fit=fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
     } else {
       varaux = fine_df[id_spl, nm_covariates]
@@ -366,7 +366,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   }
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
   if( method == 'gwr' ) { map <- fit$SDF$prediction } else {
-    if ( method == 'lme' ) map <- .predict_map(fit=best_model,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = boot, level = level, data_type=data_type)
+    if ( method == 'lme' ) map <- .predict_map(fit=best_model,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = boot, level = level, data_type=data_type, latLong=data.frame( long=fine_df[,x] , lat=fine_df[,y] ))
     else map <- .predict_map(fit=best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
   }
   if (data_type == 'count') { map[map < 0.0] <- 0 }
