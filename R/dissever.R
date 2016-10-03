@@ -125,7 +125,10 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   } else {
     if (is.null(boot)) {      
       res <- predict( object=fit , newdata=data )
-      if ( nrow(res) > 1 ) res <- res[,1]
+      print(head(res))
+      print(nrow(res))
+      print(ncol(res))
+      if ( ncol(res) > 1 ) res <- res[,ncol(res)]
     } else res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
   }
   as.numeric( res )
