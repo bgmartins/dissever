@@ -51,8 +51,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     form = as.formula(paste("x~",paste(names(x), collapse="+")))
     fit <- gw( form , data= data.frame( x , x=y_aux ) )
   } else if ( method == 'lme' ) {
-    print(x)
-    fit <- lme( fixed=as.formula("x~.") , data=data.frame( x , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
+    fit <- lme( fixed=as.formula("x~Doserate+Elevation+Panchromat+Slope+TWI") , data=data.frame( x , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
   } else fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
@@ -209,6 +208,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   } 
   # Convert fine data to data.frame
   fine_df <- .as_data_frame_factors(fine, xy = TRUE)
+  print(head(fine_df))
   # Add coarse cell ID to fine data.frame
   fine_df[['cell']] <- as.integer(.create_lut_fine(ids_coarse, fine))
   ids_coarse2 <- raster(coarse)
@@ -230,13 +230,10 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( !is.null(nmax) && nmax > 0 ) {  n_spl <- min(n_spl, nmax) }
                              
   id_spl_aux <- SpatialPointsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
-  print (id_spl_aux)
   id_spl <- spsample( x = id_spl_aux , type='regular' , n = n_spl ) # sample grid cells  
   print(id_spl)                           
   id_spl_aux <- over( id_spl , id_spl_aux)
   id_spl <- id_spl_aux$cell3
-  print (id_spl)
-  print (id_spl_aux)
                              
   id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
   if (verbose) message('Selecting best model parameters')
