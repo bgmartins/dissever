@@ -48,8 +48,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   y_aux = y
   if ( data_type == 'categorical' ) { y_aux = factor( y_aux ) }
   if ( method == 'gwrm' ) { 
-    form = as.formula(paste("x~",paste(names(vars), collapse="+")))
-    fit <- gw( form , data= data.frame( vars , x=y_aux ) )
+    fit <- gw( as.formula(paste("x~",paste(names(vars), collapse="+"))) , data= data.frame( vars , x=y_aux ) )
   } else if ( method == 'lme' ) {
     fit <- lme( fixed=as.formula("x ~ . - dummy") , data=data.frame( vars , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
@@ -73,7 +72,11 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     else bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
     # generate predictions
     if ( method == 'lme' ) predict(bootstrap_fit, data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))) )
-    else predict(bootstrap_fit, fine_df)
+    else { 
+      res <- predict(bootstrap_fit, fine_df)
+      if ( !is.null( nrow(res) ) ) res <- res[,1]
+      as.numeric( res )
+    }
   }, n)
   # If level is a number < 1, or instead if level is a function
   if (is.numeric(level)) {
@@ -116,8 +119,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     if (n_workers < 1) stop('Wrong split vector')
     res <- foreach( i = 0:(n_workers - 1), .combine = c, .packages = 'caret' ) %dopar% {
       if (is.null(boot)) { 
-        predict(object=fit , newdata = data[split == i, ])
+        res <- predict(object=fit , newdata = data[split == i, ])
         if ( !is.null( nrow(res) ) ) res <- res[,1]
+        as.numeric( res )
       } else {
         .bootstrap_ci(fit = fit, fine_df = data[split == i, ], level = level, n = boot, data_type=data_type)
       }
