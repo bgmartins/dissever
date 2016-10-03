@@ -8,7 +8,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 
 # simple wrapper around raster::as.data.frame that handles categorical data columns correctly
 .as_data_frame_factors <- function(x, ...) {
-  crs(x) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
   res <- as.data.frame(x, ...)
   if (any(is.factor(x))) {
     # Get names of original stack (not affected by bug)
@@ -227,7 +226,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( !is.null(nmax) && nmax > 0 ) {  n_spl <- min(n_spl, nmax) }
                              
   id_spl <- SpatialPointsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
-  id_spl <- over( spsample( x = id_spl , type='regular' , n = n_spl ) , id_spl ) # sample grid cells  
+  id_spl <- over( spsample( x = id_spl , type='random' , n = n_spl ) , id_spl ) # sample grid cells  
   id_spl <- id_spl$cell3
   print(id_spl)
 
@@ -245,7 +244,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
   } else {
-    fit <- .update_model( x = fine_df[id_spl, nm_covariates], y = y_aux, method = method, control = train_control_init, tune_grid = tune_grid, data_type = data_type )
+    fit <- .update_model( data = fine_df[id_spl, nm_covariates], y = y_aux, method = method, control = train_control_init, tune_grid = tune_grid, data_type = data_type )
     best_params <- fit$bestTune
     if (verbose) {
       best_params_str <- paste( lapply(names(best_params), function(x) paste(x, " = ", best_params[[x]], sep = "")), collapse = ", ")
@@ -290,7 +289,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     # Update model and update dissever predictions on fine grid
     if( method != 'gwr' ) {
       if (verbose) message('| -- updating model')
-      fit <- .update_model( x = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type )
+      fit <- .update_model( data = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type )
       if (verbose) message('| -- updating predictions')
       if ( method == 'lme' ) fine_df[['dummy']] <- rep.int(1,nrow(fine_df))
       diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
