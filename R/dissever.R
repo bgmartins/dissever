@@ -50,7 +50,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( method == 'gwrm' ) { 
     fit <- gw( as.formula(paste("x~",paste(names(vars), collapse="+"))) , data= data.frame( vars , x=y_aux ) )
   } else if ( method == 'lme' ) {
-    fit <- lme( fixed=as.formula("x ~ . - dummy - lat - long") , data=data.frame( vars , lat=latLong$lat , long=latLong$long , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
+    fit <- lme( fixed=as.formula("x ~ . - dummy") , data=data.frame( vars , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
 #    fit <- lme( fixed=as.formula("x ~ . - dummy - lat - long") , data=data.frame( vars , lat=latLong$lat , long=latLong$long , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" , correlation = corGaus(form = ~ lat+long | dummy ) )
   } else fit <- train( x = vars, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
