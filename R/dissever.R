@@ -8,7 +8,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 
 # simple wrapper around raster::as.data.frame that handles categorical data columns correctly
 .as_data_frame_factors <- function(x, ...) {
-  res <- as.data.frame(spTransform(x, CRS(x)), ...)
+  crs(x) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+  res <- as.data.frame(x, ...)
   if (any(is.factor(x))) {
     # Get names of original stack (not affected by bug)
     nm <- names(x)
