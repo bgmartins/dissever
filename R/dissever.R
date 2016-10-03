@@ -50,7 +50,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( method == 'gwrm' ) { 
     form = as.formula(paste("x~",paste(names(x), collapse="+")))
     fit <- gw( form , data= data.frame( x , x=y_aux ) )
-  } else if ( method == 'lme' ) { 
+  } else if ( method == 'lme' ) {
+    print(x)
     fit <- lme( fixed=as.formula("x~.") , data=data.frame( x , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
   } else fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
@@ -228,7 +229,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   n_spl <- ceiling(nrow(fine_df) * p)
   if ( !is.null(nmax) && nmax > 0 ) {  n_spl <- min(n_spl, nmax) }
                              
-  id_spl_aux <- SpatialPointsDataFrame(fine_df[, c('x', 'y')], data.frame(fine_df), proj4string = CRS(projection(fine)))
+  id_spl_aux <- SpatialPointsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
   print (id_spl_aux)
   id_spl <- spsample( x = id_spl_aux , type='regular' , n = n_spl ) # sample grid cells  
   id_spl_aux <- over( id_spl , id_spl_aux)
@@ -245,10 +246,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       y_aux = y_aux / as.numeric( factor )
      }
   }
-  lon_spl = list()
-  lat_spl = list()
-  lon = list()
-  lat = list()
   if( method == 'gwr' ) {
     if (data_type != "count" && data_type != "numeric") {
       stop('Data type should be count or numeric, when performing geographically weighted regression')
@@ -303,18 +300,14 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       if (verbose) message('| -- updating predictions')
       diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
     } else {
-      lon_spl = fine_df[id_spl, 'x']
-      lat_spl = fine_df[id_spl, 'y']
-      lon = fine_df$x
-      lat = fine_df$y
       varaux = fine_df[id_spl, nm_covariates]
       varr = diss_result[id_spl, 'diss', drop = TRUE]
-      datagwr = SpatialPointsDataFrame(data.frame(lon_spl, lat_spl), data.frame(varr, varaux), proj4string = CRS(projection(fine)))
-      coordgwr = SpatialPointsDataFrame(data.frame(lon, lat), data.frame(fine_df[nm_covariates]), proj4string = CRS(projection(fine)))
+      datagwr = SpatialPointsDataFrame(fine_df[id_spl, c('x','y')], data.frame(varr, varaux), proj4string = CRS(projection(fine)))
+      coordgwr = SpatialPointsDataFrame(fine_df[, c('x','y')], data.frame(fine_df[nm_covariates]), proj4string = CRS(projection(fine)))
       form = as.formula(paste("varr~",paste(names(fine_df[nm_covariates]), collapse="+")))
       if (verbose) message('| -- tuning GWR bandwidth')
-      dMat1 <- .gw.dist(dp.locat=as.matrix(data.frame(lon_spl, lat_spl)), rp.locat=as.matrix(data.frame(lon, lat)) )
-      dMat2 <- .gw.dist(dp.locat=as.matrix(data.frame(lon_spl, lat_spl)), rp.locat=as.matrix(data.frame(lon_spl, lat_spl)) )
+      dMat1 <- .gw.dist(dp.locat=as.matrix(fine_df[id_spl, c('x','y')]), rp.locat=as.matrix(fine_df[, c('x','y')]) )
+      dMat2 <- .gw.dist(dp.locat=as.matrix(fine_df[id_spl, c('x','y')]), rp.locat=as.matrix(fine_df[id_spl, c('x','y')]) )
       baux <- bw.gwr(form, data = datagwr, kernel="gaussian", longlat=TRUE, adaptive=TRUE, dMat=dMat2 )
       if (verbose) message('| -- updating model')
       fit <- gwr.predict(form, data = datagwr, predictdata = coordgwr, longlat = TRUE, bw = baux, kernel="gaussian", adaptive=TRUE, dMat1=dMat1 , dMat2=dMat2 )
