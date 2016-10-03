@@ -41,19 +41,21 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 }
 
 # Computes the carret regression model between some coarse data and the stack of covariates
-.update_model <- function(data, y, method = 'rf', control, tune_grid, data_type="numeric") {
+.update_model <- function(vars, y, method = 'rf', control, tune_grid, data_type="numeric") {
   # Pick the parameters of the model using error on the first run.
   # Then use the optimised parameters in the iteration loop to save on computing time.
   # Basically we just need to change the trainControl object to do that.
   y_aux = y
   if ( data_type == 'categorical' ) { y_aux = factor( y_aux ) }
   if ( method == 'gwrm' ) { 
-    form = as.formula(paste("x~",paste(names(data), collapse="+")))
-    fit <- gw( form , data= data.frame( data , x=y_aux ) )
+    form = as.formula(paste("x~",paste(names(vars), collapse="+")))
+    fit <- gw( form , data= data.frame( vars , x=y_aux ) )
   } else if ( method == 'lme' ) {
-    fit <- lme( fixed=as.formula(paste("x~",paste(names(data), collapse="+"))) , data=data.frame( data , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
+    aux <- paste("x~",paste(names(vars), collapse="+"))
+    print(aux)
+    fit <- lme( fixed=as.formula(paste("x~",paste(names(vars), collapse="+"))) , data=data.frame( vars , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
-  } else fit <- train( x = data, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
+  } else fit <- train( x = vars, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
 }
 
@@ -226,7 +228,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( !is.null(nmax) && nmax > 0 ) {  n_spl <- min(n_spl, nmax) }
                              
   id_spl <- SpatialPointsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
-  id_spl <- over( spsample( x = id_spl , type='random' , n = n_spl ) , id_spl ) # sample grid cells  
+  id_spl <- over( id_spl , spsample( x = id_spl , type='regular' , n = n_spl ) , returnList = TRUE ) # sample grid cells  
   id_spl <- id_spl$cell3
   print(id_spl)
 
@@ -244,7 +246,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
   } else {
-    fit <- .update_model( data = fine_df[id_spl, nm_covariates], y = y_aux, method = method, control = train_control_init, tune_grid = tune_grid, data_type = data_type )
+    fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = y_aux, method = method, control = train_control_init, tune_grid = tune_grid, data_type = data_type )
     best_params <- fit$bestTune
     if (verbose) {
       best_params_str <- paste( lapply(names(best_params), function(x) paste(x, " = ", best_params[[x]], sep = "")), collapse = ", ")
@@ -289,7 +291,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     # Update model and update dissever predictions on fine grid
     if( method != 'gwr' ) {
       if (verbose) message('| -- updating model')
-      fit <- .update_model( data = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type )
+      fit <- .update_model( vars = fine_df[id_spl, nm_covariates], y = diss_result[id_spl, 'diss', drop = TRUE], method = method, control = train_control_iter, tune_grid = best_params, data_type = data_type )
       if (verbose) message('| -- updating predictions')
       if ( method == 'lme' ) fine_df[['dummy']] <- rep.int(1,nrow(fine_df))
       diss_result$diss <- .predict_map(fit, fine_df, split = split_cores, boot = NULL, data_type=data_type)
