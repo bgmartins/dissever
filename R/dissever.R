@@ -139,7 +139,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     fine,
     coarse_var_names = NULL,
     method = "rf",
-    p = NULL, nmax = NULL,
+    p = NULL,
+    sample_method = 'regular',
+    nmax = NULL,
     thresh = 0.01,
     min_iter = 5,
     max_iter = 100,
@@ -219,19 +221,17 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   )
   coarse_df <- na.exclude(coarse_df)
   fine_df <- na.exclude(fine_df)
-  fine_df[['cell3']] <- 1:nrow(fine_df)
   if (is.null(p)) { p = as.numeric( nrow( coarse_df ) / nrow(fine_df) ) }
   # Sub-sample for modelling
   n_spl <- ceiling(nrow(fine_df) * p)
-  if ( !is.null(nmax) && nmax > 0 ) {  n_spl <- min(n_spl, nmax) }
-                             
-  id_spl <- SpatialPixelsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
-  id_spl <- over( spsample( x = id_spl , type='regular' , n = n_spl ) , id_spl , fn = mean ) # sample grid cells  
-  print(id_spl)
-  id_spl <- id_spl$cell3
-  print(id_spl)
-
-  id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
+  if ( !is.null(nmax) && nmax > 0 ) {  n_spl <- min(n_spl, nmax) }                             
+  if ( is.null(sample_method) || sample_method == 'random' ) id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
+  else {
+    fine_df[['cell3']] <- 1:nrow(fine_df)
+    id_spl <- SpatialPixelsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
+    id_spl <- over( spsample( x = id_spl , type=sample_method , n = n_spl ) , id_spl , fn = mean ) # sample grid cells  
+    id_spl <- id_spl$cell3
+  }
   if (verbose) message('Selecting best model parameters')
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
   if ( data_type == "count" ) { 
@@ -456,11 +456,12 @@ if(!isGeneric("dissever")) {
 #' @name dissever
 #' @aliases dissever,RasterStack-method
 #' @description Performs spatial downscaling of coarse grid mapping to fine grid mapping using predictive covariates and a model fitted using the caret package.
-#' @param coarse object of class \code{"RasterLayer"}, the coarse-resolution layer that needs to be downscaled, or alternatively an object of class \code{"SpatialPolygonsDataFrame"} with two attributes
-#' @param fine object of class \code{"RasterStack"}, the fine-resolution stack of predictive covariates
-#' @param coarse_var_names names for two attributes from the \code{"SpatialPolygonsDataFrame"} passed as the coarse object, corresponding to IDs for the different regions and to the per-region values that are to be downscaled
-#' @param method a string specifying which classification or regression model to use (via the caret package). Possible values are found using names(caret::getModelInfo()).
-#' @param p numeric, proportion of the fine map that is sampled for fitting the dissever model (between 0 and 1, defaults to the ratio between the coarse grid resolution and the fine grid resolution)
+#' @param coarse, object of class \code{"RasterLayer"}, the coarse-resolution layer that needs to be downscaled, or alternatively an object of class \code{"SpatialPolygonsDataFrame"} with two attributes
+#' @param fine, object of class \code{"RasterStack"}, the fine-resolution stack of predictive covariates
+#' @param coarse_var_names, names for two attributes from the \code{"SpatialPolygonsDataFrame"} passed as the coarse object, corresponding to IDs for the different regions and to the per-region values that are to be downscaled
+#' @param method, a string specifying which classification or regression model to use (via the caret package). Possible values are found using names(caret::getModelInfo()).
+#' @param p, numeric proportion of the fine map that is sampled for fitting the dissever model (between 0 and 1, defaults to the ratio between the coarse grid resolution and the fine grid resolution)
+#' @param sample_method, string specifying the method used for sampling the fine map through the spsample function  
 #' @param nmax numeric maximum number of pixels selected for fitting the dissever model. It will override the number of pixels chosen by the \code{p} option if that number is over the value passed to \code{nmax}.
 #' @param thresh numeric, dissever iterations will proceed until the error of the dissever model reaches this value, or until the maximum number of iterations is met (defaults to 0.01)
 #' @param min_iter numeric, minimum number of iterations (defaults to 5)
