@@ -226,7 +226,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   # Sub-sample for modelling
   n_spl <- ceiling(nrow(fine_df) * p)
   if ( !is.null(nmax) && nmax > 0 ) {  n_spl <- min(n_spl, nmax) }
-  # id_spl <- spsample( x = as(fine, 'SpatialGridDataFrame') , type='regular' , n = n_spl ) # sample grid cells
+  id_spl <- spsample( x = SpatialPointsDataFrame(data.frame(lon, lat), data.frame(fine_df), proj4string = CRS(projection(fine))) , type='regular' , n = n_spl ) # sample grid cells  
+  print (id_spl)             
   id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
   if (verbose) message('Selecting best model parameters')
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
