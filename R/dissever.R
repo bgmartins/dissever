@@ -51,6 +51,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     fit <- gw( as.formula(paste("x~",paste(names(vars), collapse="+"))) , data= data.frame( vars , x=y_aux ) )
   } else if ( method == 'lme' ) {
     fit <- lme( fixed=as.formula("x ~ . - dummy - lat - long") , data=data.frame( vars , latLong, x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" , correlation = corGaus(form = ~ lat+long | dummy ) )
+    print(fit)
   } else fit <- train( x = vars, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
 }
@@ -105,9 +106,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   as.numeric( res )
 }
 
-.generate_ci <- function(object, covariates, level = 0.9, n = 50L) {
+.generate_ci <- function(object, covariates, level = 0.9, n = 50L, latLong=NULL) {
   fine_df <- na.exclude(.as_data_frame_factors(covariates, xy = TRUE))
-  b <- .bootstrap_ci(object$fit, fine_df, level = 0.9, n = 50L)
+  b <- .bootstrap_ci(object$fit, fine_df, level = 0.9, n = 50L, latLong=latLong)
   res <- rasterFromXYZ( data.frame( fine_df[, 1:2], b ), res = res(covariates), crs = projection(covariates) )
   res
 }
@@ -126,8 +127,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       }
     }
   } else {
-    if (is.null(boot)) {      
-      res <- predict( object=fit , newdata=data )
+    if (is.null(boot)) {
+      if (! is.null(latLong) ) res <- predict( object=fit , newdata=data.frame(data,latLong) )
+      else res <- predict( object=fit , newdata=data )
       if ( !is.null( nrow(res) ) ) res <- res[,1]
     } else res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type, latLong=latLong)
   }
