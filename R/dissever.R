@@ -232,6 +232,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   id_spl_aux <- SpatialPointsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
   print (id_spl_aux)
   id_spl <- spsample( x = id_spl_aux , type='regular' , n = n_spl ) # sample grid cells  
+  print(id_spl)                           
   id_spl_aux <- over( id_spl , id_spl_aux)
   id_spl <- id_spl_aux$cell3
   print (id_spl)
