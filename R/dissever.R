@@ -117,7 +117,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     res <- foreach( i = 0:(n_workers - 1), .combine = c, .packages = 'caret' ) %dopar% {
       if (is.null(boot)) { 
         predict(object=fit , newdata = data[split == i, ])
-        if ( nrow(res) > 1 ) res <- res[,1]
+        if ( !is.null( nrow(res) ) ) res <- res[,1]
       } else {
         .bootstrap_ci(fit = fit, fine_df = data[split == i, ], level = level, n = boot, data_type=data_type)
       }
@@ -125,10 +125,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   } else {
     if (is.null(boot)) {      
       res <- predict( object=fit , newdata=data )
-      print(head(res))
-      print(nrow(res))
-      print(ncol(res))
-      if ( ncol(res) > 1 ) res <- res[,ncol(res)]
+      if ( !is.null( nrow(res) ) ) res <- res[,1]
     } else res <- .bootstrap_ci(fit = fit, fine_df = data, level = level, n = boot, data_type=data_type)
   }
   as.numeric( res )
