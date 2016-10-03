@@ -213,13 +213,13 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   ids_coarse2 <- raster(coarse)
   ids_coarse2[] <- 1:ncell(coarse)
   fine_df[['cell2']] <- as.integer(.create_lut_fine(ids_coarse2, fine))
-  fine_df[['cell3']] <- as.integer(1:ncell(fine))
+  fine_df[['cell3']] <- 1:ncell(fine)
   if ( add_pycno > 0 || ( input_polygons && data_type == "count") ) { fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer, fine)) }
   fine_df <- na.exclude(fine_df)
   # Resampled model onto fine grid
   fine_df <- cbind(
     fine_df[, c('x', 'y', 'cell', 'cell2', 'cell3' , nm_covariates)],
-    .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
+    .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = c('cell3', nm_coarse), by = 'cell2')
   )
   coarse_df <- na.exclude(coarse_df)
   fine_df <- na.exclude(fine_df)
@@ -233,7 +233,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   id_spl_aux <- over(id_spl , id_spl_aux)
   id_spl <- id_spl_aux$cell3
   print (id_spl)
-
+  print (id_spl_aux)
+  print (fine_df$cell3 )
   id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
   if (verbose) message('Selecting best model parameters')
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
