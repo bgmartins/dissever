@@ -52,6 +52,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     fit <- gw( form , data= data.frame( x , x=y_aux ) )
   } else if ( method == 'lme' ) {
     fit <- lme( fixed=as.formula("x~Doserate+Elevation+Panchromat+Slope+TWI") , data=data.frame( x , x=y_aux , dummy=rep.int( 1 , length(y_aux) ) ) , random = ~ 1 | dummy, method = "ML" )
+    print(fit)
     # update(fit, correlation = corGaus(1, form = ~ east + north), method = "ML")
   } else fit <- train( x = x, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
@@ -214,27 +215,26 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   ids_coarse2 <- raster(coarse)
   ids_coarse2[] <- 1:ncell(coarse)
   fine_df[['cell2']] <- as.integer(.create_lut_fine(ids_coarse2, fine))
-  fine_df[['cell3']] <- 1:ncell(fine)
   if ( add_pycno > 0 || ( input_polygons && data_type == "count") ) { fine_df[['pycnolayer']] <- as.integer(.create_lut_fine(pycnolayer, fine)) }
   fine_df <- na.exclude(fine_df)
   # Resampled model onto fine grid
   fine_df <- cbind(
-    fine_df[, c('x', 'y', 'cell', 'cell2', 'cell3' , nm_covariates)],
+    fine_df[, c('x', 'y', 'cell', 'cell2', nm_covariates)],
     .join_interpol(coarse_df = coarse_df[, c('cell', 'cell2', nm_coarse)], fine_df = fine_df, attr = nm_coarse, by = 'cell2')
   )
   coarse_df <- na.exclude(coarse_df)
   fine_df <- na.exclude(fine_df)
+  fine_df[['cell3']] <- 1:length(fine_df)
   if (is.null(p)) { p = as.numeric( nrow( coarse_df ) / nrow(fine_df) ) }
   # Sub-sample for modelling
   n_spl <- ceiling(nrow(fine_df) * p)
   if ( !is.null(nmax) && nmax > 0 ) {  n_spl <- min(n_spl, nmax) }
                              
-  id_spl_aux <- SpatialPointsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
-  id_spl <- spsample( x = id_spl_aux , type='regular' , n = n_spl ) # sample grid cells  
-  print(id_spl)                           
-  id_spl_aux <- over( id_spl , id_spl_aux)
-  id_spl <- id_spl_aux$cell3
-                             
+  id_spl <- SpatialPointsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
+  id_spl <- over( spsample( x = id_spl , type='regular' , n = n_spl ) , id_spl ) # sample grid cells  
+  id_spl <- id_spl$cell3
+  print(id_spl)
+
   id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
   if (verbose) message('Selecting best model parameters')
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
