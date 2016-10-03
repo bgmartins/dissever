@@ -51,8 +51,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     fit <- gw( as.formula(paste("x~",paste(names(vars), collapse="+"))) , data= data.frame( vars , x=y_aux ) )
   } else if ( method == 'lme' ) {
     fit <- data.frame( vars , out=y_aux , lat=latLong$lat , long=latLong$long , dummy=rep.int( 1 , length(y_aux) ) )
-    form = as.formula("out ~ . - dummy - lat - long")
-    fit <- lme( fixed=form , data=fit , random = ~ 1 | dummy, correlation = corGaus(form = ~ lat+long | dummy ) )
+    fit <- lme( fixed=out ~ . - dummy - lat - long , data=fit , random = ~ 1 | dummy, correlation = corGaus(form = ~ lat+long | dummy ) )
   } else fit <- train( x = vars, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
   fit
 }
