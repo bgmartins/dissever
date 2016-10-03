@@ -227,10 +227,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( !is.null(nmax) && nmax > 0 ) {  n_spl <- min(n_spl, nmax) }                             
   if ( is.null(sample_method) || sample_method == 'random' ) id_spl <- sample(1:nrow(fine_df), size = n_spl) # sample random grid cells
   else {
-    fine_df[['cell3']] <- 1:nrow(fine_df)
-    id_spl <- SpatialPixelsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df), proj4string = CRS(projection(fine)))
-    id_spl <- over( spsample( x = id_spl , type=sample_method , n = n_spl ) , id_spl , fn = mean ) # sample grid cells  
-    id_spl <- id_spl$cell3
+    id_spl <- SpatialPixelsDataFrame(fine_df[, c('y', 'x')], data.frame(fine_df,cell3=1:nrow(fine_df)), proj4string = CRS(projection(fine)))
+    id_spl <- over( spsample( x = id_spl , type=sample_method , n = n_spl ) , id_spl , fn = mean )$cell3 # sample grid cells  
   }
   if (verbose) message('Selecting best model parameters')
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
