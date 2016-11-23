@@ -484,9 +484,7 @@ print.dissever <- function(x, ...) { print(x$fit, ...) }
 #' @author Pierre Roudier
 summary.dissever <- function(object, ...) { summary(object$fit, ...) }
 
-if(!isGeneric("generate_ci")) {
-  setGeneric("generate_ci", function(object, covariates, ...) { standardGeneric("generate_ci") })
-}
+if(!isGeneric("generate_ci")) setGeneric("generate_ci", function(object, covariates, ...) { standardGeneric("generate_ci") })
 
 #' @name generate_ci
 #' @aliases generate_ci,list,RasterStack-method
@@ -519,9 +517,7 @@ if(!isGeneric("generate_ci")) {
 #' }
 setMethod('generate_ci', signature(object = "list", covariates = "RasterStack"), .generate_ci )
 
-if(!isGeneric("dissever")) {
-  setGeneric("dissever", function(coarse, fine, ...) { standardGeneric("dissever") })
-}
+if(!isGeneric("dissever")) setGeneric("dissever", function(coarse, fine, ...) { standardGeneric("dissever") })
 
 #' @title Spatial downscaling
 #' @name dissever
@@ -580,5 +576,7 @@ if(!isGeneric("dissever")) {
 #' plot(res_lm, type = 'perf', main = "Dissever using GAM")
 #'
 setMethod( 'dissever', signature(fine = "RasterStack"), .dissever )
-
+  
+if(!isGeneric("pycno")) setGeneric("pycno", function(x, pops, celldim, ...) { standardGeneric("pycno") })
+  
 setMethod( 'pycno', signature(x = "SpatialPolygonsDataFrame"), .pycno )
