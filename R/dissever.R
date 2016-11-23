@@ -165,7 +165,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   attr(zones,'na') <- is.na(zones)
   zones[is.na(zones)] <- max(zones,na.rm=T) + 1  
   pops <- c(pops,0)
-  x <- as.ffdf(zones * 0)
+  x <- as.ff(zones * 0)
   zone.list <- sort(unique(array(zones)))
   foreach (item = zone.list) %do% {
     zone.set <- (zones == item)
