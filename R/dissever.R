@@ -165,7 +165,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   attr(gm,'na') <- is.na(gm)
   gm[is.na(gm)] <- max(gm,na.rm=T) + 1  
   pops <- c(pops,0)
-
   zones <- gm
   x <- zones * 0
   zone.list <- sort(unique(array(zones)))
@@ -175,8 +174,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   }
   stopper <- max(x)
   stopper <- stopper*10^(-converge)
-  print(stopper)
-  print(max(x))
   repeat {
     old.x <- x
     mval <- mean(x)
@@ -206,7 +203,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if (!is.null(attr(pm,'na'))) pm[attr(pm,'na')] <- NA
   result <- SpatialPixelsDataFrame(coordinates(gr),data.frame(dens=array(pm)))
   result <- as(result,"SpatialGridDataFrame")
-  proj4string(result) <- CRS(proj4string(x))
+  proj4string(result) <- px
   return(result)
 }  
  
