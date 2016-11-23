@@ -148,7 +148,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 # Pycnophylactic interpolation, adapted from the pycno package by Chris Brunsdon.
 # Given a SpatialPolygonsDataFrame and a set of populations for each polygon, compute a population density estimate based on Tobler's pycnophylactic interpolation algorithm. The result is a SpatialGridDataFrame.
 .pycno <- function( x, pops, celldim, r=0.2, converge=3, verbose=TRUE ) {
-  gr <- .poly2grid(x,celldim)
   if (!is(celldim,"SpatialGrid")) {
     bbx <- slot(x,'bbox')
     offset <- bbx[,1]
