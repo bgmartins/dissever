@@ -1,6 +1,5 @@
 import(caret)
 import(methods)
-import(pycno)
 import(raster)
 import(dplyr)
 import(sp)
@@ -8,6 +7,8 @@ import(parallel)
 import(bigmemory)
 import(nlme)
 import(GWRM)
+import(maptools) 
+import(rgeos)
 
 importFrom(plyr, aaply)
 
@@ -36,4 +37,5 @@ export(plot.dissever)
 S3method(plot, dissever)
 
 exportMethods(dissever)
+exportMethods(pycno)
 exportMethods(generate_ci)
