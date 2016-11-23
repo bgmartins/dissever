@@ -23,6 +23,7 @@ Imports:
     dplyr,
     raster,
     foreach,
+    ff,
     boot,
     magrittr,
     viridis,
