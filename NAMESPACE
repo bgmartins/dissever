@@ -9,6 +9,7 @@ import(nlme)
 import(GWRM)
 import(maptools) 
 import(rgeos)
+import(foreach)
 
 importFrom(plyr, aaply)
 
