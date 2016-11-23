@@ -159,21 +159,19 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   proj4string(gr) <- px
   gr <- SpatialPixelsDataFrame(coordinates(gr),data.frame(zone=SpatialPoints(coordinates(gr),proj4string=px) %over% as(x,"SpatialPolygons")))
   gr <- as(gr,"SpatialGridDataFrame")
-  gr.dim <- slot(getGridTopology(gr),"cells.dim")
-  gm <- gr[[1]]
-  dim(gm) <- gr.dim
-  attr(gm,'na') <- is.na(gm)
-  gm[is.na(gm)] <- max(gm,na.rm=T) + 1  
+  gr.dim <- slot(getGridTopology(gr), "cells.dim" )
+  zones <- gr[[1]]
+  dim(zones) <- gr.dim
+  attr(zones,'na') <- is.na(zones)
+  zones[is.na(zones)] <- max(zones,na.rm=T) + 1  
   pops <- c(pops,0)
-  zones <- gm
   x <- zones * 0
   zone.list <- sort(unique(array(zones)))
   foreach (item = zone.list) %do% {
     zone.set <- (zones == item)
-    x[zone.set] <- pops[item]/sum(zone.set)
+    x[zone.set] <- pops[item] / sum(zone.set)
   }
-  stopper <- max(x)
-  stopper <- stopper*10^(-converge)
+  stopper <- max(x) * 10^(-converge)
   repeat {
     old.x <- x
     mval <- mean(x)
@@ -184,13 +182,13 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     x <- x*r + (1-r)*sm
     foreach (item = zone.list) %do% {
           zone.set <- (zones == item)
-          correct <- (pops[item] - sum(x[zone.set]))/sum(zone.set)
+          correct <- (pops[item] - sum(x[zone.set])) / sum(zone.set)
           x[zone.set] <- x[zone.set] + correct
     }
-    x[x<0] <- 0
+    x[ x<0 ] <- 0
     foreach (item = zone.list) %do% {
           zone.set <- (zones == item)
-          correct <- pops[item]/sum(x[zone.set])
+          correct <- pops[item] / sum(x[zone.set])
           x[zone.set] <- x[zone.set] * correct 
     }
     if (verbose) {
@@ -199,10 +197,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     }
     if (max(abs(old.x - x)) <= stopper) break 
   }
-  pm <- x
-  if (!is.null(attr(pm,'na'))) pm[attr(pm,'na')] <- NA
-  result <- SpatialPixelsDataFrame(coordinates(gr),data.frame(dens=array(pm)))
-  result <- as(result,"SpatialGridDataFrame")
+  if (!is.null(attr(x,'na'))) x[attr(x,'na')] <- NA
+  result <- SpatialPixelsDataFrame( coordinates(gr), data.frame(dens=array(x)) )
+  result <- as( result , "SpatialGridDataFrame" )
   proj4string(result) <- px
   return(result)
 }  
