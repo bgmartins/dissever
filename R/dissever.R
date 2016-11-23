@@ -167,7 +167,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   pops <- c(pops,0)
   x <- zones * 0
   zone.list <- sort(unique(array(zones)))
-  foreach (item = zone.list, .combine = c, .export = c("x","zones","pops")) %dopar% {
+  foreach (item = zone.list, .combine = c, .export = c("x","zones","pops")) %do% {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item] / sum(zone.set)
   }
