@@ -160,12 +160,12 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   gr <- SpatialPixelsDataFrame(coordinates(gr),data.frame(zone=SpatialPoints(coordinates(gr),proj4string=px) %over% as(x,"SpatialPolygons")))
   gr <- as(gr,"SpatialGridDataFrame")
   gr.dim <- slot(getGridTopology(gr), "cells.dim" )
-  zones <- gr[[1]]
+  zones <- as.big.matrix(gr[[1]])
   dim(zones) <- gr.dim
   attr(zones,'na') <- is.na(zones)
   zones[is.na(zones)] <- max(zones,na.rm=T) + 1  
   pops <- c(pops,0)
-  x <- as.big.matrix(zones * 0)
+  x <- zones * 0
   zone.list <- sort(unique(array(zones)))
   foreach (item = zone.list) %do% {
     zone.set <- (zones == item)
