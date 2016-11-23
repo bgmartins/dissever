@@ -147,7 +147,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 
 # Pycnophylactic interpolation, adapted from the pycno package by Chris Brunsdon.
 # Given a SpatialPolygonsDataFrame and a set of populations for each polygon, compute a population density estimate based on Tobler's pycnophylactic interpolation algorithm. The result is a SpatialGridDataFrame.
-.pycno <- function(x,pops,celldim,r=0.2,converge=3,verbose=TRUE) {
+.pycno <- function( x, pops, celldim, r=0.2, converge=3, verbose=TRUE ) {
   gr <- .poly2grid(x,celldim)
   if (!is(celldim,"SpatialGrid")) {
     bbx <- slot(x,'bbox')
@@ -186,13 +186,13 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     for (item in zone.list) {
           zone.set <- (zones == item)
           correct <- (pops[item] - sum(x[zone.set]))/sum(zone.set)
-          x[zone.set] <- x[zone.set] + correct }
+          x[zone.set] <- x[zone.set] + correct
     }
     x[x<0] <- 0
     for (item in zone.list) {
           zone.set <- (zones == item)
           correct <- pops[item]/sum(x[zone.set])
-          x[zone.set] <- x[zone.set]*correct 
+          x[zone.set] <- x[zone.set] * correct 
     }
     if (verbose) {
       flush.console()
@@ -204,7 +204,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   result <- SpatialPixelsDataFrame(coordinates(gr),data.frame(dens=array(pm)))
   result <- as(result,"SpatialGridDataFrame")
   proj4string(result) <- CRS(proj4string(x))
-  return(result) 
+  return(result)
 }  
  
 .dissever <- function(
