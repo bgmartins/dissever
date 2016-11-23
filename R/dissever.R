@@ -579,4 +579,4 @@ setMethod( 'dissever', signature(fine = "RasterStack"), .dissever )
   
 if(!isGeneric("pycno")) setGeneric("pycno", function(x, pops, celldim, ...) { standardGeneric("pycno") })
   
-setMethod( 'pycno', signature(x = "SpatialPolygonsDataFrame"), .pycno )
+setMethod( 'pycno', signature(), .pycno )
