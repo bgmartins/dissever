@@ -167,7 +167,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   pops <- c(pops,0)
   x <- zones * 0
   zone.list <- sort(unique(array(zones)))
-  foreach (item = zone.list) %dopar% {
+  foreach (item = zone.list, .combine = c) %dopar% {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item] / sum(zone.set)
   }
@@ -180,13 +180,13 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     pad <- (t(apply(pad,1,s1d)) + apply(pad,2,s1d))/2
     sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
     x <- x*r + (1-r)*sm
-    foreach (item = zone.list) %dopar% {
+    foreach (item = zone.list, .combine = c) %dopar% {
           zone.set <- (zones == item)
           correct <- (pops[item] - sum(x[zone.set])) / sum(zone.set)
           x[zone.set] <- x[zone.set] + correct
     }
     x[ x<0 ] <- 0
-    foreach (item = zone.list) %dopar% {
+    foreach (item = zone.list, .combine = c) %dopar% {
           zone.set <- (zones == item)
           correct <- pops[item] / sum(x[zone.set])
           x[zone.set] <- x[zone.set] * correct 
