@@ -156,7 +156,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     gr <- SpatialGrid(GridTopology(offset,c(celldim,celldim),shape)) 
   } else { gr <- celldim }
   px <- CRS(proj4string(x))
-  proj4string(sg) <- px
+  proj4string(gr) <- px
   gr <- SpatialPixelsDataFrame(coordinates(gr),data.frame(zone=SpatialPoints(coordinates(gr),proj4string=px) %over% as(x,"SpatialPolygons")))
   gr <- as(gr,"SpatialGridDataFrame")
   gr.dim <- slot(getGridTopology(gr),"cells.dim")
