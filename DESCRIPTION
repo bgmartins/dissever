@@ -29,7 +29,9 @@ Imports:
     GWmodel,
     GWRM,
     nlme,
-    bigmemory
+    bigmemory,
+    maptools, 
+    rgeos
 Suggests:
     knitr,
     rmarkdown,
