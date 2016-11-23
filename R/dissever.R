@@ -166,7 +166,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   gm[is.na(gm)] <- max(gm,na.rm=T) + 1  
   pops <- c(pops,0)
   zones <- gm
-  x <- zones*0
+  x <- zones * 0
   zone.list <- sort(unique(array(zones)))
   foreach (item=zone.list) %dopar% {
     zone.set <- (zones == item)
@@ -174,6 +174,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   }
   stopper <- max(x)
   stopper <- stopper*10^(-converge)
+  print(stopper)
   repeat {
     old.x <- x
     mval <- mean(x)
@@ -195,8 +196,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     }
     if (verbose) {
       flush.console()
-      cat(sprintf("Maximum Change: %12.5f - will stop at %12.5f\n", max(abs(old.x - x)),stopper))}
-    if (max(abs(old.x - x)) < stopper) break 
+      cat(sprintf("Maximum Change: %12.5f - will stop at %12.5f\n", max(abs(old.x - x)), stopper))
+    }
+    if (max(abs(old.x - x)) <= stopper) break 
   }
   pm <- x
   if (!is.null(attr(pm,'na'))) mat[attr(pm,'na')] <- NA
