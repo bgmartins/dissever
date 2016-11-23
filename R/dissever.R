@@ -580,3 +580,5 @@ if(!isGeneric("dissever")) {
 #' plot(res_lm, type = 'perf', main = "Dissever using GAM")
 #'
 setMethod( 'dissever', signature(fine = "RasterStack"), .dissever )
+
+setMethod( 'pycno', signature(x = "SpatialPolygonsDataFrame"), .pycno )
