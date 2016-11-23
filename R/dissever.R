@@ -145,6 +145,66 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
    dist.res
 }
 
+.pycno <- function(x,pops,celldim,r=0.2,converge=3,verbose=TRUE) {
+  gr <- .poly2grid(x,celldim)
+  if (!is(celldim,"SpatialGrid")) {
+    bbx <- slot(x,'bbox')
+    offset <- bbx[,1]
+    extent <- bbx[,2] - offset
+    shape <- ceiling(extent / celldim)
+    gr <- SpatialGrid(GridTopology(offset,c(celldim,celldim),shape)) 
+  } else { gr <- celldim }
+  px <- CRS(proj4string(x))
+  proj4string(sg) <- px
+  gr <- SpatialPixelsDataFrame(coordinates(gr),data.frame(zone=SpatialPoints(coordinates(gr),proj4string=px) %over% as(x,"SpatialPolygons")))
+  gr <- as(gr,"SpatialGridDataFrame")
+  gr.dim <- slot(getGridTopology(gr),"cells.dim")
+  gm <- gr[[1]]
+  dim(gm) <- gr.dim
+  attr(gm,'na') <- is.na(gm)
+  gm[is.na(gm)] <- max(gm,na.rm=T) + 1  
+  pops <- c(pops,0)
+  zones <- gm
+  x <- zones*0
+  zone.list <- sort(unique(array(zones)))
+  for (item in zone.list) {
+    zone.set <- (zones == item)
+    x[zone.set] <- pops[item]/sum(zone.set)
+  }
+  stopper <- max(x)
+  stopper <- stopper*10^(-converge)
+  repeat {
+    old.x <- x
+    mval <- mean(x)
+    s1d <- function(s) unclass(filter(s,c(0.5,0,0.5)))
+    pad <- rbind(mval,cbind(mval,x,mval),mval)
+    pad <- (t(apply(pad,1,s1d)) + apply(pad,2,s1d))/2
+    sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
+    x <- x*r + (1-r)*sm
+    for (item in zone.list) {
+          zone.set <- (zones == item)
+          correct <- (pops[item] - sum(x[zone.set]))/sum(zone.set)
+          x[zone.set] <- x[zone.set] + correct }
+    }
+    x[x<0] <- 0
+    for (item in zone.list) {
+          zone.set <- (zones == item)
+          correct <- pops[item]/sum(x[zone.set])
+          x[zone.set] <- x[zone.set]*correct 
+    }
+    if (verbose) {
+      flush.console()
+      cat(sprintf("Maximum Change: %12.5f - will stop at %12.5f\n", max(abs(old.x - x)),stopper))}
+    if (max(abs(old.x - x)) < stopper) break 
+  }
+  pm <- x
+  if (!is.null(attr(pm,'na'))) mat[attr(pm,'na')] <- NA
+  result <- SpatialPixelsDataFrame(coordinates(gr),data.frame(dens=array(pm)))
+  result <- as(result,"SpatialGridDataFrame")
+  proj4string(result) <- CRS(proj4string(x))
+  return(result) 
+}  
+ 
 .dissever <- function(
     coarse,
     fine,
@@ -186,14 +246,14 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       stop('The parameter coarse_var_names should be used to provide the names for attributes corresponding to the IDs of polygons and the quantity to be downscaled')
     }
     minres <- min(res(fine))
-    if ( add_pycno > 0 ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno, verbose=FALSE ) ) }
-    else if ( data_type == "count" ) { pycnolayer <- raster( pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0, verbose=FALSE ) ) }    
+    if ( add_pycno > 0 ) { pycnolayer <- raster( .pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno, verbose=FALSE ) ) }
+    else if ( data_type == "count" ) { pycnolayer <- raster( .pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0, verbose=FALSE ) ) }    
     ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')
     names(ids_coarse) <- 'cell'
     coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
   } else if ( add_pycno > 0 ) {
     minres <- min(res(fine))
-    pycnolayer <- raster( pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.05, converge=add_pycno, verbose=FALSE ) )
+    pycnolayer <- raster( .pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.05, converge=add_pycno, verbose=FALSE ) )
   }
   if (min(res(fine)) >= min(res(coarse))) { stop('Resolution of fine data should be higher than resolution of coarse data') }
   if (!(data_type == "numeric" || data_type == "count" || data_type == "categorical" )) {
