@@ -165,16 +165,18 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   attr(gm,'na') <- is.na(gm)
   gm[is.na(gm)] <- max(gm,na.rm=T) + 1  
   pops <- c(pops,0)
+
   zones <- gm
   x <- zones * 0
   zone.list <- sort(unique(array(zones)))
-  foreach (item=zone.list) %dopar% {
+  for (item in zone.list) {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item]/sum(zone.set)
   }
   stopper <- max(x)
   stopper <- stopper*10^(-converge)
   print(stopper)
+  print(max(x))
   repeat {
     old.x <- x
     mval <- mean(x)
@@ -183,13 +185,13 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     pad <- (t(apply(pad,1,s1d)) + apply(pad,2,s1d))/2
     sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
     x <- x*r + (1-r)*sm
-    foreach (item = zone.list) %dopar% {
+    for (item in zone.list) {
           zone.set <- (zones == item)
           correct <- (pops[item] - sum(x[zone.set]))/sum(zone.set)
           x[zone.set] <- x[zone.set] + correct
     }
     x[x<0] <- 0
-    foreach (item = zone.list) %dopar% {
+    for (item in zone.list) {
           zone.set <- (zones == item)
           correct <- pops[item]/sum(x[zone.set])
           x[zone.set] <- x[zone.set] * correct 
@@ -201,7 +203,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     if (max(abs(old.x - x)) <= stopper) break 
   }
   pm <- x
-  if (!is.null(attr(pm,'na'))) mat[attr(pm,'na')] <- NA
+  if (!is.null(attr(pm,'na'))) pm[attr(pm,'na')] <- NA
   result <- SpatialPixelsDataFrame(coordinates(gr),data.frame(dens=array(pm)))
   result <- as(result,"SpatialGridDataFrame")
   proj4string(result) <- CRS(proj4string(x))
