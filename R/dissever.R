@@ -167,11 +167,10 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   pops <- c(pops,0)
   x <- zones * 0
   zone.list <- sort(unique(array(zones)))
-  aux <- foreach (item = zone.list, .combine = c, .export = c("x","zones","pops")) %dopar% {
+  foreach (item = zone.list, .combine = c, .export = c("x","zones","pops")) %dopar% {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item] / sum(zone.set)
   }
-  print(aux)
   stopper <- max(x) * 10^(-converge)
   repeat {
     old.x <- x
@@ -181,19 +180,17 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     pad <- (t(apply(pad,1,s1d)) + apply(pad,2,s1d))/2
     sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
     x <- x*r + (1-r)*sm
-    aux <- foreach (item = zone.list, .combine = c, .export = c("x","zones","pops")) %dopar% {
+    foreach (item = zone.list, .combine = c, .export = c("x","zones","pops")) %do% {
           zone.set <- (zones == item)
           correct <- (pops[item] - sum(x[zone.set])) / sum(zone.set)
           x[zone.set] <- x[zone.set] + correct
     }
-    print(aux)
     x[ x<0 ] <- 0
-    aux <- foreach (item = zone.list, .combine = c, .export = c("x","zones","pops")) %dopar% {
+    foreach (item = zone.list, .combine = c, .export = c("x","zones","pops")) %do% {
           zone.set <- (zones == item)
           correct <- pops[item] / sum(x[zone.set])
           x[zone.set] <- x[zone.set] * correct 
     }
-    print(aux)
     if (verbose) {
       flush.console()
       cat(sprintf("Maximum Change: %12.5f - will stop at %12.5f\n", max(abs(old.x - x)), stopper))
