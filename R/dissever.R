@@ -177,8 +177,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   repeat {
     old.x <- x
     mval <- mean(x)
-    print(mval)
-    s1d <- function(s) unclass(filter(s,c(0.5,0,0.5)))
+    s1d <- function(s) unclass(stats::filter(s,c(0.5,0,0.5)))
     pad <- rbind(mval,cbind(mval,x,mval),mval)
     pad <- (t(apply(pad,1,s1d)) + apply(pad,2,s1d))/2
     sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
