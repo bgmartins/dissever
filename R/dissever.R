@@ -168,15 +168,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   x <- zones * 0
   zone.list <- sort(unique(array(zones)))
   merge.results <- function(a,b) { 
-    print("---")
-    summary(a)
-    print("***")
-    print(as.numeric(a[2]))
-    print("+++")
-    print(as.numeric(b[2]))
-    print("&&&")
-    x[a[[1]]] <- as.numeric(a[2])
-    x[b[[1]]] <- as.numeric(b[2])
+    x[[a[1]]] <- as.numeric(a[2])
+    x[[b[1]]] <- as.numeric(b[2])
   }
   foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones"), .combine=merge.results) %dopar% {
     zone.set <- (zones == item)
