@@ -167,14 +167,9 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   pops <- c(pops,0)
   x <- zones * 0
   zone.list <- sort(unique(array(zones)))
-  merge.results <- function(a,b) { 
-    print(a[[1]])
-    x[a[[1]]] <- as.numeric(a[2])
-    x[b[[1]]] <- as.numeric(b[2])
-  }
-  foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones"), .combine=merge.results) %dopar% {
+  foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones")) %do% {
     zone.set <- (zones == item)
-    list( zone.set , pops[item] / sum(zone.set) )
+    x[zone.set] <- pops[item] / sum(zone.set)
   }
   stopper <- max(x) * 10^(-converge)
   repeat {
@@ -185,13 +180,13 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     pad <- (t(apply(pad,1,s1d)) + apply(pad,2,s1d))/2
     sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
     x <- x*r + (1-r)*sm
-    foreach (item = zone.list, .combine = c, .inorder=FALSE, .export = c("x","zones","pops")) %do% {
+    foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones","pops")) %do% {
           zone.set <- (zones == item)
           correct <- (pops[item] - sum(x[zone.set])) / sum(zone.set)
           x[zone.set] <- x[zone.set] + correct    
     } 
     x[ x<0 ] <- 0
-    foreach (item = zone.list, .combine = c, .inorder=FALSE, .export = c("x","zones","pops")) %do% {
+    foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones","pops")) %do% {
           zone.set <- (zones == item)
           correct <- pops[item] / sum(x[zone.set])
           x[zone.set] <- x[zone.set] * correct 
