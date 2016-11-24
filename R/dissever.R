@@ -168,8 +168,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   x <- zones * 0
   zone.list <- sort(unique(array(zones)))
   merge.results <- function(a,b) { 
-    print a[2]
-    print b[2]
+    print(a[2])
+    print(b[2])
     x[a[1]] <- a[2]
     x[b[1]] <- b[2]
   }
