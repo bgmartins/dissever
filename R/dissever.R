@@ -175,7 +175,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   }
   foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones"), .combine=merge.results) %dopar% {
     zone.set <- (zones == item)
-    c( zone.set , pops[item] / sum(zone.set) )
+    list( zone.set , pops[item] / sum(zone.set) )
   }
   stopper <- max(x) * 10^(-converge)
   repeat {
