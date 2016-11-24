@@ -167,10 +167,10 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   pops <- c(pops,0)
   x <- zones * 0
   zone.list <- sort(unique(array(zones)))
-  lapply( zone.list , FUN = function(item) {
+  foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones")) %do% {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item] / sum(zone.set)
-  } )
+  }
   stopper <- max(x) * 10^(-converge)
   repeat {
     old.x <- x
