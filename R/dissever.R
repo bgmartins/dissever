@@ -171,8 +171,10 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     print("---")
     summary(a)
     print("***")
-    summary(b)
+    print(b)
     print("+++")
+    print(b[1])
+    print("&&&")
     x[a[[1]]] <- a[[2]]
     x[b[[1]]] <- b[[2]]
   }
