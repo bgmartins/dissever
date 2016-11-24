@@ -167,8 +167,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   pops <- c(pops,0)
   x <- zones * 0
   zone.list <- sort(unique(array(zones)))
-  mclapply( zone.list , FUN = function(item) {
-#  foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones")) %do% {
+  lapply( zone.list , FUN = function(item) {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item] / sum(zone.set)
   } )
