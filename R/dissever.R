@@ -171,12 +171,12 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     print("---")
     summary(a)
     print("***")
-    print(b)
+    print(as.float(a[2]))
     print("+++")
-    print(b[1])
+    print(as.float(b[2]))
     print("&&&")
-    x[a[[1]]] <- a[[2]]
-    x[b[[1]]] <- b[[2]]
+    x[a[[1]]] <- as.float(a[2])
+    x[b[[1]]] <- as.float(b[2])
   }
   foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones"), .combine=merge.results) %dopar% {
     zone.set <- (zones == item)
