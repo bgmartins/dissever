@@ -166,7 +166,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   zones[is.na(zones)] <- max(zones,na.rm=T) + 1  
   zone.list <- sort(unique(array(zones))) 
   pops <- c(pops,0)
-  x <- as.ff( zones * 0 )
+  x <- zones * 0
   foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones")) %do% {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item] / sum(zone.set)
