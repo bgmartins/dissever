@@ -167,19 +167,19 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   zone.list <- sort(unique(array(zones))) 
   pops <- c(pops,0)
   x <- zones * 0
-  x <- as.big.matrix(x)
+#  x <- as.big.matrix(x)
   foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones")) %do% {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item] / sum(zone.set)
   }
-  x <- as.array(x)
+#  x <- as.array(x)
   stopper <- max(x) * 10^(-converge)
   repeat {
     old.x <- x
     mval <- mean(x)
     s1d <- function(s) unclass(stats::filter(s,c(0.5,0,0.5)))
     pad <- rbind(mval,cbind(mval,x,mval),mval)
-    pad <- (t(apply(pad,1,s1d)) + apply(pad,2,s1d))/2
+    pad <- (t(parApply(pad,1,s1d)) + parApply(pad,2,s1d))/2
     sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
     x <- x*r + (1-r)*sm
     foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones","pops")) %do% {
