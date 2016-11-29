@@ -179,7 +179,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     mval <- mean(x)
     s1d <- function(s) unclass(stats::filter(s,c(0.5,0,0.5)))
     pad <- rbind(mval,cbind(mval,x,mval),mval)
-    pad <- (t(parApply(pad,1,s1d)) + parApply(pad,2,s1d))/2
+    pad <- (t(parApply(cl=NULL,pad,1,s1d)) + parApply(cl=NULL,pad,2,s1d))/2
     sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
     x <- x*r + (1-r)*sm
     foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones","pops")) %do% {
