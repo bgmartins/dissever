@@ -160,13 +160,13 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   gr <- SpatialPixelsDataFrame(coordinates(gr),data.frame(zone=SpatialPoints(coordinates(gr),proj4string=px) %over% as(x,"SpatialPolygons")))
   gr <- as(gr,"SpatialGridDataFrame")
   gr.dim <- slot(getGridTopology(gr), "cells.dim" )
-  zones <- as.big.matrix(gr[[1]])
+  zones <- gr[[1]]
   dim(zones) <- gr.dim
   attr(zones,'na') <- is.na(zones)
   zones[is.na(zones)] <- max(zones,na.rm=T) + 1  
   zone.list <- sort(unique(as.array(zones))) 
   pops <- c(pops,0)
-  x <- as.big.matrix(zones * 0)
+  x <- zones * 0
   foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones")) %do% {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item] / sum(zone.set)
