@@ -198,7 +198,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     if (max(abs(old.x - x)) <= stopper) break 
   }
   if (!is.null(attr(x,'na'))) x[attr(x,'na')] <- NA
-  result <- SpatialPixelsDataFrame( coordinates(gr), data.frame(dens=as.array(x)) )
+  result <- SpatialPixelsDataFrame( coordinates(gr), data.frame(dens=array(x)) )
   result <- as( result , "SpatialGridDataFrame" )
   proj4string(result) <- px
   return(result)
