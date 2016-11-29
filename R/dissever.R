@@ -160,19 +160,17 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   gr <- SpatialPixelsDataFrame(coordinates(gr),data.frame(zone=SpatialPoints(coordinates(gr),proj4string=px) %over% as(x,"SpatialPolygons")))
   gr <- as(gr,"SpatialGridDataFrame")
   gr.dim <- slot(getGridTopology(gr), "cells.dim" )
-  zones <- gr[[1]]
+  zones <- as.big.matrix(gr[[1]])
   dim(zones) <- gr.dim
   attr(zones,'na') <- is.na(zones)
   zones[is.na(zones)] <- max(zones,na.rm=T) + 1  
-  zone.list <- sort(unique(array(zones))) 
+  zone.list <- sort(unique(as.array(zones))) 
   pops <- c(pops,0)
-  x <- zones * 0
-  x <- as.big.matrix(x)
+  x <- as.big.matrix(zones * 0)
   foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones")) %do% {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item] / sum(zone.set)
   }
-  x <- as.array(x)
   stopper <- max(x) * 10^(-converge)
   repeat {
     old.x <- x
@@ -187,7 +185,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
           correct <- (pops[item] - sum(x[zone.set])) / sum(zone.set)
           x[zone.set] <- x[zone.set] + correct    
     } 
-    x[ x<0 ] <- 0
+    x[ x < 0 ] <- 0
     foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones","pops")) %do% {
           zone.set <- (zones == item)
           correct <- pops[item] / sum(x[zone.set])
@@ -200,7 +198,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     if (max(abs(old.x - x)) <= stopper) break 
   }
   if (!is.null(attr(x,'na'))) x[attr(x,'na')] <- NA
-  result <- SpatialPixelsDataFrame( coordinates(gr), data.frame(dens=array(x)) )
+  result <- SpatialPixelsDataFrame( coordinates(gr), data.frame(dens=as.array(x)) )
   result <- as( result , "SpatialGridDataFrame" )
   proj4string(result) <- px
   return(result)
