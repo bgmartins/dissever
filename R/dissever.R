@@ -164,7 +164,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   dim(zones) <- gr.dim
   attr(zones,'na') <- is.na(zones)
   zones[is.na(zones)] <- max(zones,na.rm=T) + 1  
-  zone.list <- sort(unique(as.array(zones))) 
+  zone.list <- sort(unique(array(zones))) 
   pops <- c(pops,0)
   x <- zones * 0
   foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones")) %do% {
