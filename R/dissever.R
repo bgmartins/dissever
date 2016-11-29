@@ -164,13 +164,15 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   dim(zones) <- gr.dim
   attr(zones,'na') <- is.na(zones)
   zones[is.na(zones)] <- max(zones,na.rm=T) + 1  
+  zone.list <- sort(unique(array(zones))) 
   pops <- c(pops,0)
-  x <- as.big.matrix( zones * 0 )
-  zone.list <- sort(unique(array(zones)))
+  x <- zones * 0
+  x <- as.big.matrix(x)
   foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones")) %do% {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item] / sum(zone.set)
   }
+  x <- as.array(x)
   stopper <- max(x) * 10^(-converge)
   repeat {
     old.x <- x
