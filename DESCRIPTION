@@ -32,7 +32,8 @@ Imports:
     nlme,
     bigmemory,
     maptools, 
-    rgeos
+    rgeos,
+    mxnet
 Suggests:
     knitr,
     rmarkdown,
