@@ -50,12 +50,11 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( method == 'gwr' ) { 
     fit <- gw( as.formula(paste("x~",paste(names(vars), collapse="+"))) , data= data.frame( vars , x=y_aux ) )
   } else if ( method == 'mlp' ) {
-    device.gpu <- lapply(0:(1), function(i) { mx.gpu(i) })
     data <- mx.symbol.Variable("data")
     fc1 <- mx.symbol.FullyConnected(data, num_hidden=10)
     act1 <- mx.symbol.Activation(fc1, act_type="relu")
     fc2 <- mx.symbol.FullyConnected(act1, num_hidden=1)
-    fit <- mx.model.FeedForward.create(mx.symbol.LinearRegressionOutput(fc2), X=vars, y=y_aux, ctx=device.gpu, num.round=50, array.batch.size=20, learning.rate=2e-6, momentum=0.9, eval.metric=mx.metric.rmse)
+    fit <- mx.model.FeedForward.create(mx.symbol.LinearRegressionOutput(fc2), X=vars, y=y_aux, num.round=50, array.batch.size=20, learning.rate=2e-6, momentum=0.9, eval.metric=mx.metric.rmse)
   } else if ( method == 'lme' ) {
     fit <- data.frame( vars , out=y_aux , lat=latLong$lat , long=latLong$long , dummy=rep.int( 1 , length(y_aux) ) )
     fit <- lme( fixed=out ~ . - dummy - lat - long , data=fit , random = ~ 1 | dummy, correlation = corGaus(form = ~ lat+long | dummy ) )
