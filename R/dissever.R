@@ -75,13 +75,12 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     # if ( data_type == "categorical" ) { bootstrap_df <- factor(bootstrap_df) }
     if ( method == 'gwrm' ) bootstrap_fit <- gw(.outcome ~ ., data = bootstrap_df )
     else if ( method == 'mlp' ) {
-      device.gpu <- lapply(0:(1), function(i) { mx.gpu(i) })
       data <- mx.symbol.Variable("data")
       fc1 <- mx.symbol.FullyConnected(data, num_hidden=10)
       act1 <- mx.symbol.Activation(fc1, act_type="relu")
       fc2 <- mx.symbol.FullyConnected(act1, num_hidden=1)
       # TODO : fix for MLP
-      # bootstrap_fit <- mx.model.FeedForward.create(mx.symbol.LinearRegressionOutput(fc2), X=vars, y=y_aux, ctx=device.gpu, num.round=50, array.batch.size=20, learning.rate=2e-6, momentum=0.9, eval.metric=mx.metric.rmse)      
+      # bootstrap_fit <- mx.model.FeedForward.create(mx.symbol.LinearRegressionOutput(fc2), X=vars, y=y_aux, num.round=50, array.batch.size=20, learning.rate=2e-6, momentum=0.9, eval.metric=mx.metric.rmse)      
       # bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
     } else if ( method == 'lme' ) bootstrap_fit <- lme( fixed=.outcome ~ . - dummy - lat - long , data=data.frame( bootstrap_df , lat=latLong$lat[idx], lat=latLong$long[idx], dummy=rep.int( 1 , nrow(bootstrap_df) ) ) , random = ~ 1 | dummy, correlation = corGaus(form = ~ lat+long | dummy ) )
     else bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
