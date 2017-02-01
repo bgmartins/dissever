@@ -50,7 +50,12 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if ( method == 'gwr' ) { 
     fit <- gw( as.formula(paste("x~",paste(names(vars), collapse="+"))) , data= data.frame( vars , x=y_aux ) )
   } else if ( method == 'mlp' ) {
-    fit <- train( x = vars, y = y_aux, method = method, trControl = control, tuneGrid  = tune_grid )
+    device.gpu <- lapply(0:(1), function(i) { mx.gpu(i) })
+    data <- mx.symbol.Variable("data")
+    fc1 <- mx.symbol.FullyConnected(data, num_hidden=10)
+    act1 <- mx.symbol.Activation(fc1, act_type="relu")
+    fc2 <- mx.symbol.FullyConnected(act1, num_hidden=1)
+    fit <- mx.model.FeedForward.create(mx.symbol.LinearRegressionOutput(fc2), X=vars, y=y_aux, ctx=device.gpu, num.round=50, array.batch.size=20, learning.rate=2e-6, momentum=0.9, eval.metric=mx.metric.rmse)
   } else if ( method == 'lme' ) {
     fit <- data.frame( vars , out=y_aux , lat=latLong$lat , long=latLong$long , dummy=rep.int( 1 , length(y_aux) ) )
     fit <- lme( fixed=out ~ . - dummy - lat - long , data=fit , random = ~ 1 | dummy, correlation = corGaus(form = ~ lat+long | dummy ) )
@@ -70,16 +75,20 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     bootstrap_df <- data[idx, ]
     # if ( data_type == "categorical" ) { bootstrap_df <- factor(bootstrap_df) }
     if ( method == 'gwrm' ) bootstrap_fit <- gw(.outcome ~ ., data = bootstrap_df )
-    else if ( method == 'mlp' ) bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
-    else if ( method == 'lme' ) bootstrap_fit <- lme( fixed=.outcome ~ . - dummy - lat - long , data=data.frame( bootstrap_df , lat=latLong$lat[idx], lat=latLong$long[idx], dummy=rep.int( 1 , nrow(bootstrap_df) ) ) , random = ~ 1 | dummy, correlation = corGaus(form = ~ lat+long | dummy ) )
+    else if ( method == 'mlp' ) {
+      device.gpu <- lapply(0:(1), function(i) { mx.gpu(i) })
+      data <- mx.symbol.Variable("data")
+      fc1 <- mx.symbol.FullyConnected(data, num_hidden=10)
+      act1 <- mx.symbol.Activation(fc1, act_type="relu")
+      fc2 <- mx.symbol.FullyConnected(act1, num_hidden=1)
+      # TODO : fix for MLP
+      # bootstrap_fit <- mx.model.FeedForward.create(mx.symbol.LinearRegressionOutput(fc2), X=vars, y=y_aux, ctx=device.gpu, num.round=50, array.batch.size=20, learning.rate=2e-6, momentum=0.9, eval.metric=mx.metric.rmse)      
+      # bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
+    } else if ( method == 'lme' ) bootstrap_fit <- lme( fixed=.outcome ~ . - dummy - lat - long , data=data.frame( bootstrap_df , lat=latLong$lat[idx], lat=latLong$long[idx], dummy=rep.int( 1 , nrow(bootstrap_df) ) ) , random = ~ 1 | dummy, correlation = corGaus(form = ~ lat+long | dummy ) )
     else bootstrap_fit <- train(.outcome ~ ., data = bootstrap_df, method = method, trControl = trainControl(method = "none"), tuneGrid = fit$bestTune)
     # generate predictions
     if ( method == 'lme' ) predict(bootstrap_fit, data.frame(fine_df,latLong,dummy=rep.int(1,nrow(fine_df))) )
-    else if ( method == 'mlp' ) {
-      res <- predict(bootstrap_fit, fine_df)
-      if ( !is.null( nrow(res) ) ) res <- res[,1]
-      as.numeric( res )
-    } else { 
+    else { 
       res <- predict(bootstrap_fit, fine_df)
       if ( !is.null( nrow(res) ) ) res <- res[,1]
       as.numeric( res )
@@ -436,7 +445,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
   if( method == 'gwr' ) { map <- fit$SDF$prediction } else {
     if ( method == 'lme' ) map <- .predict_map(fit=best_model,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = boot, level = level, data_type=data_type, latLong=data.frame( long=fine_df$x , lat=fine_df$y ))
-    if ( method == 'mlp' ) map <- .predict_map(fit=best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
     else map <- .predict_map(fit=best_model, fine_df, split = split_cores, boot = boot, level = level, data_type=data_type)
   }
   if (data_type == 'count') { map[map < 0.0] <- 0 }
