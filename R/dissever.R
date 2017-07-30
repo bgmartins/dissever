@@ -97,15 +97,15 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     ci <- c((1 - level) / 2, 1 - (1 - level) / 2)
     if ( data_type == "categorical" ) {
       res <- data.frame(
-       lower = aaply(boot_samples$t, 2, quantile, probs = ci[1]),
-       mean = aaply(boot_samples$t, 2, median),
-       upper = aaply(boot_samples$t, 2, quantile, probs = ci[2])
+        lower = aaply(boot_samples$t, 2, quantile, probs = ci[1]),
+        mean = aaply(boot_samples$t, 2, median),
+        upper = aaply(boot_samples$t, 2, quantile, probs = ci[2])
       )
     } else {
       res <- data.frame(
-       lower = aaply(boot_samples$t, 2, quantile, probs = ci[1]),
-       mean = aaply(boot_samples$t, 2, mean),
-       upper = aaply(boot_samples$t, 2, quantile, probs = ci[2])
+        lower = aaply(boot_samples$t, 2, quantile, probs = ci[1]),
+        mean = aaply(boot_samples$t, 2, mean),
+        upper = aaply(boot_samples$t, 2, quantile, probs = ci[2])
       )
     }
   } else if (is.function(level)) {
@@ -150,45 +150,233 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   }
   as.numeric( res )
 }
-  
+
 .gw.dist<- function( dp.locat , rp.locat ) {
-   n.rp<-length(rp.locat[,1])
-   n.dp<-length(dp.locat[,1])
-   dist.res <- big.matrix(nrow=n.dp , ncol=n.rp)
-   for (i in 1:n.rp) dist.res[,i]<-spDistsN1(dp.locat, matrix(rp.locat[i,],nrow=1),longlat=TRUE)
-   dist.res
+  n.rp<-length(rp.locat[,1])
+  n.dp<-length(dp.locat[,1])
+  dist.res <- big.matrix(nrow=n.dp , ncol=n.rp)
+  for (i in 1:n.rp) dist.res[,i]<-spDistsN1(dp.locat, matrix(rp.locat[i,],nrow=1),longlat=TRUE)
+  dist.res
 }
+
+	.worker2 <- function(x){
+	  proj4string(gridElement) <- px
+	  overlay <- data.frame(zone=SpatialPoints(coordinates(gridElement),proj4string=px) %over% as(poligonDataFrame,"SpatialPolygons"))
+	  #assign("pixelGrid", pixelGrid, envir=globalenv())
+	  return(overlay)
+	}
+
+  .worker5 <- function(x, index = NULL){
+	descx <- paste("x", toString(index), ".desc", sep = "")
+    #descZones <- paste("zones", toString(index), ".desc", sep = "")
+    x <- attach.big.matrix(descx)
+	#zones <- attach.big.matrix(descZones)
+    for (item in zoneList) {
+      #zone.set <- (zones[,] == item)
+	  zone.set <- (zones == item)
+      x[which(zone.set, arr.ind = TRUE)] <- pops[item] / sum(zone.set)
+      #x[zone.set] <- pops[item] / sum(zone.set)
+      #return(x)
+    }
+  }
+
+  .worker7 <- function(x, index = NULL){
+  	descx <- paste("iteration", toString(index), ".desc", sep = "")
+    #descZones <- paste("zones", toString(index), ".desc", sep = "")
+    x <- attach.big.matrix(descx)
+	#zones <- attach.big.matrix(descZones)
+    for (item in zoneList) {
+      #zone.set <- (zones[,] == item)
+	  zone.set <- (zones == item)
+      correct <- (pops[item] - sum(x[which(zone.set, arr.ind = TRUE)])) / sum(zone.set)
+      x[which(zone.set, arr.ind = TRUE)] <- x[which(zone.set, arr.ind = TRUE)] + correct
+    }
+  }
+  
+  .worker8 <- function(x, index = NULL){
+  	descx <- paste("iteration", toString(index), ".desc", sep = "")
+    #descZones <- paste("zones", toString(index), ".desc", sep = "")
+    x <- attach.big.matrix(descx)
+	#zones <- attach.big.matrix(descZones)
+    for (item in zoneList) {
+      #zone.set <- (zones[,] == item)
+	  zone.set <- (zones == item)
+      correct <- pops[item] / sum(x[which(zone.set, arr.ind = TRUE)])
+      x[which(zone.set, arr.ind = TRUE)] <- x[which(zone.set, arr.ind = TRUE)] * correct
+    }
+  }
 
 # Pycnophylactic interpolation, adapted from the pycno package by Chris Brunsdon.
 # Given a SpatialPolygonsDataFrame and a set of populations for each polygon, compute a population density estimate based on Tobler's pycnophylactic interpolation algorithm. The result is a SpatialGridDataFrame.
-.pycno <- function( x, pops, celldim, r=0.2, converge=3, maxiterations=100, verbose=TRUE ) {
+.pycno <- function( x, pops, celldim, r=0.2, converge=3, no_cores, verbose=TRUE ) {
+
+	#no_cores <- detectCores() - 1
+	bbx <- slot(x,'bbox')
+	offset <- bbx[,1]
+	extent <- bbx[,2] - offset
+	globalShape <- ceiling(extent / celldim)
+	intervaly <- floor(globalShape/no_cores)[[2]]
+
+	subSections <- rep(intervaly, no_cores)
+	#Ajuste para sum(subSections['y']) == globalShape['y']
+	i <- 1
+	while(sum(subSections) < globalShape[[2]]){
+		subSections[i] <- subSections[i] + 1
+		i <- i + 1
+	}
+
+	#vector.workersMemLoad[[paste("c",no_cores,"r",celldim,  sep = "")]][test] <- 0
+
+	gridList <- list()
+	for(i in 1:no_cores)  {
+		if (!is(celldim,"SpatialGrid")) {
+			if( i == 1){
+				offset <- bbx[,1]
+			}else{
+				offset[2] <- offset[2] + (celldim * subSections[i-1])
+			}			  
+			gridList[[i]] <- SpatialGrid(GridTopology(offset,c(celldim,celldim),c(globalShape[1],subSections[i])))
+
+		} else {
+			#TODO:
+			gr <- celldim
+			gridList[[i]] <- gr
+		}
+	}
+
+	px <- CRS(proj4string(x))
+
+	clusterExport(cl, "px", envir = environment())
+	poligonDataFrame <- x
+	clusterExport(cl, "poligonDataFrame", envir = environment())
+
+	for(i in 1:no_cores){
+		gridElement <- gridList[[i]]
+		clusterExport(cl[i], "gridElement", envir = environment())
+	}
+
+	clusterEvalQ(cl, library(rgdal))
+	overlays <- parLapply(cl, 1:no_cores, .worker2)
+	total <- do.call(rbind, overlays)
+
+	coords <- coordinates(gridList[1])
+	for(i in 2:no_cores){
+		coords <- rbind(coords, coordinates(gridList[i]) )
+	}
+
+	gr <- SpatialPixelsDataFrame(coords, total)
+	gr <- as(gr,"SpatialGridDataFrame")
+	gr.dim <- slot(getGridTopology(gr), "cells.dim" )
+
+	zones <- gr[[1]]
+
+	dim(zones) <- gr.dim
+	attr(zones,'na') <- is.na(zones)
+
+	zones[is.na(zones)] <- max(zones,na.rm=T) + 1
+	zone.list <- sort(unique(array(zones)))
+	pops <- c(pops,0)
+	
+	j <- 1
+	backx <- paste("x", toString(j), ".bin", sep = "")
+	descx <- paste("x", toString(j), ".desc", sep = "")
+	x <- as.big.matrix(x = zones * 0, type = "double", separated = FALSE, backingfile = backx, descriptorfile = descx)
+
+	splitsZoneList <- split(zone.list, sort(zone.list%%no_cores))
+	for(i in 1:no_cores){
+	zoneList <- splitsZoneList[[i]]
+		clusterExport(cl[i], "zoneList", envir = environment())
+		clusterExport(cl[i], "zones", envir = environment())
+		clusterExport(cl[i], "pops", envir = environment())
+	}
+
+	clusterEvalQ(cl, library(bigmemory))
+
+	parLapply(cl, 1:no_cores, .worker5, index = j)
+
+	x <- as.matrix(x)
+	stopper <- max(x, na.rm = TRUE) * 10^(-converge)
+
+
+	repeat {
+		old.x <- x
+		mval <- mean(x)
+		s1d <- function(s) unclass(stats::filter(s,c(0.5,0,0.5)))
+		pad <- rbind(mval,cbind(mval,x,mval),mval)
+		pad <- (t(apply(pad,1,s1d)) + apply(pad,2,s1d))/2
+		sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
+		#x <- x*r + (1-r)*sm
+
+		back <- paste("iteration", toString(j), ".bin", sep = "")
+		desc <- paste("iteration", toString(j), ".desc", sep = "")
+
+		x <- as.big.matrix(x = x*r + (1-r)*sm, type = "double", separated = FALSE, backingfile = back, descriptorfile = desc)
+
+		parLapply(cl, 1:no_cores, .worker7, index = j)
+
+		cells <- which(as.matrix(x)<0, arr.ind = TRUE)
+		if(length(cells) > 0){
+			x[cells] <- 0
+		}
+
+		parLapply(cl, 1:no_cores, .worker8, index = j)
+		x <- as.matrix(x)
+
+		j <- j + 1
+		if (verbose) {
+			flush.console()
+			cat(sprintf("Maximum Change: %12.5f - will stop at %12.5f\n", max(abs(old.x - x), na.rm = TRUE), stopper))
+		}
+		if (max(abs(old.x - x), na.rm = TRUE) <= stopper) break
+		print(max(abs(old.x - x), na.rm = TRUE))
+
+	}
+
+	if (!is.null(attr(x,'na'))) x[attr(x,'na')] <- NA
+	result <- SpatialPixelsDataFrame( coordinates(gr), data.frame(dens=array(x)) )
+	result <- as( result , "SpatialGridDataFrame" )
+	proj4string(result) <- px
+	#stopCluster(cl)
+	
+	print("END")
+	return(result)
+	}
+
+
+.pycnoSeq <- function( x, pops, celldim, r=0.2, converge=3, verbose=TRUE ) {
   if (!is(celldim,"SpatialGrid")) {
+    
     bbx <- slot(x,'bbox')
     offset <- bbx[,1]
     extent <- bbx[,2] - offset
     shape <- ceiling(extent / celldim)
     gr <- SpatialGrid(GridTopology(offset,c(celldim,celldim),shape)) 
   } else { gr <- celldim }
+  
   px <- CRS(proj4string(x))
   proj4string(gr) <- px
+  
   gr <- SpatialPixelsDataFrame(coordinates(gr),data.frame(zone=SpatialPoints(coordinates(gr),proj4string=px) %over% as(x,"SpatialPolygons")))
   gr <- as(gr,"SpatialGridDataFrame")
   gr.dim <- slot(getGridTopology(gr), "cells.dim" )
+  
   zones <- gr[[1]]
   dim(zones) <- gr.dim
   attr(zones,'na') <- is.na(zones)
+  
   zones[is.na(zones)] <- max(zones,na.rm=T) + 1  
-  zone.list <- sort(unique(array(zones))) 
+  zone.list <- sort(unique(array(zones)))
   pops <- c(pops,0)
   x <- zones * 0
+  
   foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones")) %do% {
     zone.set <- (zones == item)
     x[zone.set] <- pops[item] / sum(zone.set)
   }
-  stopper <- max(x) * 10^(-converge)
+  
+  stopper <- max(x, na.rm = TRUE) * 10^(-converge)
+  
   repeat {
-    if (maxiterations <= 0) break
-    maxiterations <- maxiterations - 1
     old.x <- x
     mval <- mean(x)
     s1d <- function(s) unclass(stats::filter(s,c(0.5,0,0.5)))
@@ -197,50 +385,63 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
     x <- x*r + (1-r)*sm
     foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones","pops")) %do% {
-          zone.set <- (zones == item)
-          correct <- (pops[item] - sum(x[zone.set])) / sum(zone.set)
-          x[zone.set] <- x[zone.set] + correct    
+      zone.set <- (zones == item)
+      correct <- (pops[item] - sum(x[zone.set])) / sum(zone.set)
+      x[zone.set] <- x[zone.set] + correct    
     } 
     x[ x < 0 ] <- 0
     foreach (item = zone.list, .inorder=FALSE, .export = c("x","zones","pops")) %do% {
-          zone.set <- (zones == item)
-          correct <- pops[item] / sum(x[zone.set])
-          x[zone.set] <- x[zone.set] * correct 
+      zone.set <- (zones == item)
+      correct <- pops[item] / sum(x[zone.set])
+      x[zone.set] <- x[zone.set] * correct 
     }
     if (verbose) {
       flush.console()
-      cat(sprintf("Maximum Change: %12.5f - will stop at %12.5f\n", max(abs(old.x - x)), stopper))
+      cat(sprintf("Maximum Change: %12.5f - will stop at %12.5f\n", max(abs(old.x - x), na.rm = TRUE), stopper))
     }
-    if (max(abs(old.x - x)) <= stopper) break 
+    if (max(abs(old.x - x), na.rm = TRUE) <= stopper) break
+    print(max(abs(old.x - x), na.rm = TRUE))
   }
   if (!is.null(attr(x,'na'))) x[attr(x,'na')] <- NA
   result <- SpatialPixelsDataFrame( coordinates(gr), data.frame(dens=array(x)) )
   result <- as( result , "SpatialGridDataFrame" )
   proj4string(result) <- px
   return(result)
-}  
- 
+}
+
+
+.worker <- function(x, index = NULL){
+      print(paste ("Split", x, "start", Sys.time(), sep = " "))
+      part <- rasterize(poligonDataFrame[parts[[x]],], raster( resolution=minres * 1.01, ext=extent(poligonDataFrame) ), coarse_var_names[index], fun='first')
+      print(paste ("Split", x, "end", Sys.time(), sep = " "))
+      return(part)
+ }
+
 .dissever <- function(
-    coarse,
-    fine,
-    coarse_var_names = NULL,
-    method = "rf",
-    p = NULL,
-    sample_method = 'regular',
-    nmax = NULL,
-    thresh = 0.01,
-    min_iter = 5,
-    max_iter = 100,
-    boot = NULL,
-    level = 0.9,
-    tune_length = 3,
-    tune_grid = .create_tune_grid(model = method, tune_length = tune_length),
-    train_control_init = .default_control_init,
-    train_control_iter = .default_control_iter,
-    data_type = "numeric",
-    add_pycno = 0,
-    verbose = FALSE
-  ) {
+  coarse,
+  fine,
+  coarse_var_names = NULL,
+  method = "rf",
+  p = NULL,
+  sample_method = 'regular',
+  nmax = NULL,
+  thresh = 0.01,
+  min_iter = 5,
+  max_iter = 100,
+  boot = NULL,
+  level = 0.9,
+  tune_length = 3,
+  tune_grid = .create_tune_grid(model = method, tune_length = tune_length),
+  train_control_init = .default_control_init,
+  train_control_iter = .default_control_iter,
+  data_type = "numeric",
+  add_pycno = 0,
+  use_parallel_backend = TRUE,
+  no_cores = 0,
+  verbose = FALSE
+) {
+  
+  start.time <- Sys.time()
   input_polygons = class(coarse) == "SpatialPolygonsDataFrame"
   if ( data_type != "count" && add_pycno > 0 ) {
     stop('Initialization based on pycnophylactic interpolation should only be used with count data')
@@ -253,32 +454,125 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   }
   # Horrible hack, avoid division by 0 in pycnophylactic interpolation
   if(input_polygons && data_type == "count" && nrow(coarse[which(coarse[[coarse_var_names[2]]] == 0),]) > 0) {
+    print("here1")
     coarse[[coarse_var_names[2]]] = coarse[[coarse_var_names[2]]] + 0.00001
   }
+  cl <- NULL
+  #no_cores <- detectCores() - 1
+  	if(use_parallel_backend){
+		cl <- makePSOCKcluster(no_cores, methods = TRUE)
+		setDefaultCluster(cl=cl)
+		assign("cl",cl,.GlobalEnv)
+	}
+  
   if ( input_polygons ) {
+    print("here2")
     if ( is.null(coarse_var_names) ) { coarse_var_names <- names( coarse ) }
     if ( length(coarse_var_names) > 2 ) {
-      stop('The parameter coarse_var_names should be used to provide the names for attributes corresponding to the IDs of polygons and the quantity to be downscaled')
+		if(use_parallel_backend){
+			stopCluster(cl)
+		}
+		stop('The parameter coarse_var_names should be used to provide the names for attributes corresponding to the IDs of polygons and the quantity to be downscaled')
     }
+	
     minres <- min(res(fine))
-    if ( add_pycno > 0 ) { pycnolayer <- raster( .pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno, verbose=FALSE ) ) }
-    else if ( data_type == "count" ) { pycnolayer <- raster( .pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0, verbose=FALSE ) ) }    
-    ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')
-    names(ids_coarse) <- 'cell'
-    coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')    
+	
+    print("here3")
+	
+	start.timepycno <- Sys.time()
+    if ( add_pycno > 0 ) {
+		if(use_parallel_backend){
+		  pycnolayer <- raster( .pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno, no_cores, verbose=FALSE ) )
+		} else {
+		  pycnolayer <- raster( .pycnoSeq( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno, verbose=FALSE ) )
+		}
+      print("here4")
+    }
+    else if ( data_type == "count" ) {
+	
+		if(use_parallel_backend){
+		  pycnolayer <- raster( .pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0, no_cores=no_cores, verbose=FALSE ) )
+		} else {
+		  pycnolayer <- raster( .pycnoSeq( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=0, verbose=FALSE ) )
+		}
+      print("here5")
+    }
+	end.timepycno <- Sys.time()
+    timepycno.taken <- difftime(end.timepycno, start.timepycno, units = "secs")
+    assign("timepycno",as.numeric(timepycno.taken),.GlobalEnv)
+    print("here6")
+    
+    
+
+    
+      
+
+	start.timerast <-  Sys.time()
+	if(use_parallel_backend){
+	
+		
+		# Number of polygons features in SPDF
+		features <- 1:nrow(coarse[,])
+		# Split features in n parts
+		n <- no_cores
+		parts <- split(features, cut(features, n))
+	
+		clusterEvalQ(cl, library(raster))
+		#TODO: coarse is exported to the cluster inside pycno method, export in dissever method instead
+		#clusterExport(cl, "coarse", envir=environment())
+		clusterExport(cl, "parts", envir=environment())
+		clusterExport(cl, "minres", envir=environment())
+		clusterExport(cl, "coarse_var_names", envir=environment())
+
+		print("Done1")
+		rParts <- parLapply(cl, 1:no_cores, .worker, index = 1)
+		print("Done2")
+		ids_coarse <- do.call(merge, rParts)
+		
+		print("Done3")
+		coarseParts <- parLapply(cl, 1:no_cores, .worker, index = 2)
+		print("Done4")
+		coarse  <- do.call(merge, coarseParts)
+		
+		print("Done5")
+    }else{
+		ids_coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[1], fun='first')    
+		coarse <- rasterize(coarse, raster( resolution=minres * 1.01, ext=extent(coarse) ), coarse_var_names[2], fun='first')
+	}
+		
+		names(ids_coarse) <- 'cell'
+	
+	end.timerast <- Sys.time()
+    timerast.taken <- difftime(end.timerast, start.timerast, units = "secs")
+    assign("timerast",as.numeric(timerast.taken),.GlobalEnv)
+	
   } else if ( add_pycno > 0 ) {
+    print("here7")
     minres <- min(res(fine))
-    pycnolayer <- raster( .pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.05, converge=add_pycno, verbose=FALSE ) )
+    pycnolayer <- raster( .pycno( rasterToPolygons(coarse), .as_data_frame_factors(coarse), 0.05, converge=add_pycno, no_cores, verbose=FALSE ) )
   }
-  if (min(res(fine)) >= min(res(coarse))) { stop('Resolution of fine data should be higher than resolution of coarse data') }
+  
+  print("here8")
+  if (min(res(fine)) >= min(res(coarse))) { 
+  stop('Resolution of fine data should be higher than resolution of coarse data') 
+  		if(use_parallel_backend){
+			stopCluster(cl)
+		}
+  }
   if (!(data_type == "numeric" || data_type == "count" || data_type == "categorical" )) {
+  		if(use_parallel_backend){
+			stopCluster(cl)
+		}
     stop('Data type should be numeric, categorical or count')
   }
+  
+  print("here9")
   # Store names of coarse data and fine-scale covariates
   nm_coarse <- names(coarse)
   nm_covariates <- names(fine)
   # Get cell numbers of the coarse grid and convert coarse data to data.frame
   if ( !input_polygons ) {
+    
     ids_coarse <- raster(coarse)
     ids_coarse[] <- 1:ncell(coarse)
     names(ids_coarse) <- 'cell'
@@ -286,6 +580,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     coarse_df$cell <- 1:nrow(coarse_df)
     coarse_df$cell2 <- coarse_df$cell
   } else {
+    print("here10")
     coarse_df <- .as_data_frame_factors(coarse, xy = TRUE)
     coarse_df$cell <- .as_data_frame_factors(ids_coarse, xy = TRUE)[['cell']]
     coarse_df$cell <- sapply(coarse_df$cell, function(x) if(is.factor(x)) { as.numeric(x) } else { x })
@@ -319,13 +614,16 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   if (verbose) message('Selecting best model parameters')
   y_aux = fine_df[id_spl, nm_coarse, drop = TRUE]  
   if ( data_type == "count" ) { 
-     if ( add_pycno > 0 || input_polygons ) { y_aux = fine_df[id_spl, 'pycnolayer', drop = TRUE] } else {
+    if ( add_pycno > 0 || input_polygons ) { y_aux = fine_df[id_spl, 'pycnolayer', drop = TRUE] } else {
       factor = nrow(fine_df) / nrow( coarse_df )
       y_aux = y_aux / as.numeric( factor )
-     }
+    }
   }
   if( method == 'gwr' ) {
     if (data_type != "count" && data_type != "numeric") {
+		if(use_parallel_backend){
+			stopCluster(cl)
+		}
       stop('Data type should be count or numeric, when performing geographically weighted regression')
     }
   } else {
@@ -344,8 +642,8 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   diss_result$diss <- fine_df[[nm_coarse]]
   if ( data_type == "count" ) {
     if ( add_pycno > 0 || input_polygons ) { diss_result$diss <- fine_df[['pycnolayer']] } else {
-     factor = nrow(fine_df) / nrow( coarse_df )
-     diss_result$diss = diss_result$diss / as.numeric( factor )
+      factor = nrow(fine_df) / nrow( coarse_df )
+      diss_result$diss = diss_result$diss / as.numeric( factor )
     }
   }
   # Initiate dissever results data.frame aggregated back to coarse grid
@@ -360,6 +658,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   } else {
     split_cores <- NULL
   }
+  start.time2 <- Sys.time()
   for (k in 1:max_iter){
     if (verbose) message('| - iteration ', k)
     if (verbose) message('| -- computing adjustement factor')
@@ -435,13 +734,14 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
       # Computing stop criterion
       stop_criterion <- mean(
         (perf[k - 2, 2] - perf[k - 1, 2]) + # improvement at last iteration
-        (perf[k - 1, 2] - error) + # improvement at this iteration
-        (perf[k - 2, 2] - error) # improvement over last 2 iterations
+          (perf[k - 1, 2] - error) + # improvement at this iteration
+          (perf[k - 2, 2] - error) # improvement over last 2 iterations
       )
       # If we have reach some kind of pseudo-optimium, we finish the iteration stage
       if (stop_criterion <= thresh) break
     }
   }
+  
   if (verbose) message('Retaining model fitted at iteration ', best_iteration)
   if( method == 'gwr' ) { map <- fit$SDF$prediction } else {
     if ( method == 'lme' ) map <- .predict_map(fit=best_model,data.frame(fine_df,dummy=rep.int(1,nrow(fine_df))), split = split_cores, boot = boot, level = level, data_type=data_type, latLong=data.frame( long=fine_df$x , lat=fine_df$y ))
@@ -455,6 +755,15 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     res <- list( fit = fit, map = map, perf = data.frame(perf) )
   }
   class(res) <- c(class(res), 'dissever')
+  
+  if(use_parallel_backend){
+	stopCluster(cl)
+  }
+  
+  end.time <- Sys.time()
+  timeTotal <- difftime(end.time, start.time, units = "secs")
+  assign("timeTotal",as.numeric(timeTotal),.GlobalEnv)
+  
   return(res)
 }
 
@@ -556,7 +865,7 @@ if(!isGeneric("dissever")) setGeneric("dissever", function(coarse, fine, ...) { 
 #' @param add_pycno controls if the results of pycnophylactic interpolation should be used as initialization (> 0)
 #' @param verbose controls the verbosity of the output (TRUE or FALSE)
 #' @docType methods
-#' @author Brendan Malone, Pierre Roudier, Bruno Martins, Jo√£o Cordeiro
+#' @author Brendan Malone, Pierre Roudier, Bruno Martins, Jo„o Cordeiro
 #' @references Malone, B.P, McBratney, A.B., Minasny, B., Wheeler, I., (2011) A general method for downscaling earth resource information. Computers & Geosciences, 41: 119-125. \url{http://dx.doi.org/10.1016/j.cageo.2011.08.021}
 #' @examples
 #' # Load the Edgeroi dataset (see ?edgeroi)
@@ -589,7 +898,7 @@ if(!isGeneric("dissever")) setGeneric("dissever", function(coarse, fine, ...) { 
 #' plot(res_lm, type = 'perf', main = "Dissever using GAM")
 #'
 setMethod( 'dissever', signature(fine = "RasterStack"), .dissever )
-  
+
 if(!isGeneric("pycno")) setGeneric("pycno", function(x, pops, celldim, ...) { standardGeneric("pycno") })
-  
+
 setMethod( 'pycno', signature(x = "SpatialPolygonsDataFrame"), .pycno )

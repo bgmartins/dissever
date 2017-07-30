@@ -11,6 +11,7 @@ import(GWRM)
 import(maptools) 
 import(rgeos)
 import(foreach)
+import(Rcpp)
 
 importFrom(plyr, aaply)
 

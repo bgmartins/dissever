@@ -32,14 +32,14 @@ Imports:
     nlme,
     bigmemory,
     maptools, 
-    rgeos
+    rgeos,
+    mxnet
 Suggests:
     knitr,
     rmarkdown,
     Cubist,
     randomForest,
-    gam,
-    mxnet
+    gam
 Collate:
     'dissever-package.R'
     'dissever.R'
