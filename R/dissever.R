@@ -328,17 +328,17 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   for(i in 1:no_cores){
     zonesIndex <- resultsMerged[[i]]
     clusterExport(cl[i], "zonesIndex", envir = environment())
-    #clusterExport(cl[i], "zones", envir = environment())
     clusterExport(cl[i], "pops", envir = environment())
   }
   
-  
   noresult <-parLapply(cl, 1:no_cores, .worker5, index = j)
   
+  
+  #TODO: tornar operação de encontrar maximo paralela, por forma a poder carregar em memoria segmentos que no total prefaçam tamanho < RAM
   x <- as.matrix(x)
   stopper <- max(x, na.rm = TRUE) * 10^(-converge)
   
-  plot(raster(x))
+  j <- j + 1
   
   repeat {
     old.x <- x
@@ -355,15 +355,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
     x <- as.big.matrix(x = x*r + (1-r)*sm, type = "double", separated = FALSE, backingfile = back, descriptorfile = desc)
     
     parLapply(cl, 1:no_cores, .worker7, index = j)
-    
-    for (i in 1:length(zonesIndex)) {
-      #zone.set <- (zones[,] == item)
-      #zone.set <- (zones == item)
-      indexes <- zonesIndex[[i]]
-      if(length(indexes) == 0) {next}
-      correct <- (pops[as.numeric(names(zonesIndex[i]))] - sum(x[indexes])) / nrow(indexes)
-      x[indexes] <- x[indexes] + correct
-    }
     
     cells <- which(as.matrix(x)<0, arr.ind = TRUE)
     if(length(cells) > 0){
