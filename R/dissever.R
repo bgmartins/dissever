@@ -270,8 +270,6 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   for(i in 1:no_cores){
     gridElement <- gridList[[no_cores - (i-1)]]
     colSpanEnd <- subSections[no_cores - (i-1)] + colSpanStart - 1
-    print(colSpanStart)
-    print(colSpanEnd)
     clusterExport(cl[i], "gridElement", envir = environment())
     clusterExport(cl[i], "colSpanStart", envir = environment())
     clusterExport(cl[i], "colSpanEnd", envir = environment())
@@ -281,7 +279,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   clusterEvalQ(cl, library(rgdal))
   clusterEvalQ(cl, library(bigmemory))
   
-  zone.list <- sapply(slot(coarse, "polygons"), function(x) as.numeric(slot(x, "ID")))
+  zone.list <- sapply(slot(x, "polygons"), function(x) as.numeric(slot(x, "ID")))
   zone.list <- tail(zone.list, length(zone.list)-1) #removes first ID zero
   zone.list <- c(zone.list, max(zone.list) + 1, max(zone.list) + 2)
   naId <- max(zone.list)
@@ -525,7 +523,7 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
 	start.timepycno <- Sys.time()
     if ( add_pycno > 0 ) {
 		if(use_parallel_backend){
-		  pycnolayer <- raster( .pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno, no_cores, verbose=FALSE ) )
+		  pycnolayer <- raster( .pycno( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno, no_cores=no_cores, verbose=FALSE ) )
 		} else {
 		  pycnolayer <- raster( .pycnoSeq( coarse, coarse[[coarse_var_names[2]]], min(minres), converge=add_pycno, verbose=FALSE ) )
 		}
