@@ -159,183 +159,235 @@ utils::globalVariables(c( "cell", "diss", ".", "matches", "i"))
   dist.res
 }
 
-	.worker2 <- function(x){
-	  proj4string(gridElement) <- px
-	  overlay <- data.frame(zone=SpatialPoints(coordinates(gridElement),proj4string=px) %over% as(poligonDataFrame,"SpatialPolygons"))
-	  #assign("pixelGrid", pixelGrid, envir=globalenv())
-	  return(overlay)
-	}
-
-  .worker5 <- function(x, index = NULL){
-	descx <- paste("x", toString(index), ".desc", sep = "")
-    #descZones <- paste("zones", toString(index), ".desc", sep = "")
-    x <- attach.big.matrix(descx)
-	#zones <- attach.big.matrix(descZones)
-    for (item in zoneList) {
-      #zone.set <- (zones[,] == item)
-	  zone.set <- (zones == item)
-      x[which(zone.set, arr.ind = TRUE)] <- pops[item] / sum(zone.set)
-      #x[zone.set] <- pops[item] / sum(zone.set)
-      #return(x)
-    }
-  }
-
-  .worker7 <- function(x, index = NULL){
-  	descx <- paste("iteration", toString(index), ".desc", sep = "")
-    #descZones <- paste("zones", toString(index), ".desc", sep = "")
-    x <- attach.big.matrix(descx)
-	#zones <- attach.big.matrix(descZones)
-    for (item in zoneList) {
-      #zone.set <- (zones[,] == item)
-	  zone.set <- (zones == item)
-      correct <- (pops[item] - sum(x[which(zone.set, arr.ind = TRUE)])) / sum(zone.set)
-      x[which(zone.set, arr.ind = TRUE)] <- x[which(zone.set, arr.ind = TRUE)] + correct
-    }
-  }
+.worker2 <- function(x){
+  proj4string(gridElement) <- px
+  overlay <- data.frame(zone=SpatialPoints(coordinates(gridElement),proj4string=px) %over% as(poligonDataFrame,"SpatialPolygons"))
+  #assign("pixelGrid", pixelGrid, envir=globalenv())
+  gr <- SpatialPixelsDataFrame(coordinates(gridElement), overlay)
+  gr.dim <- slot(getGridTopology(gr), "cells.dim" )
+  zones <- gr[[1]]
+  dim(zones) <- gr.dim
   
-  .worker8 <- function(x, index = NULL){
-  	descx <- paste("iteration", toString(index), ".desc", sep = "")
-    #descZones <- paste("zones", toString(index), ".desc", sep = "")
-    x <- attach.big.matrix(descx)
-	#zones <- attach.big.matrix(descZones)
-    for (item in zoneList) {
-      #zone.set <- (zones[,] == item)
-	  zone.set <- (zones == item)
-      correct <- pops[item] / sum(x[which(zone.set, arr.ind = TRUE)])
-      x[which(zone.set, arr.ind = TRUE)] <- x[which(zone.set, arr.ind = TRUE)] * correct
-    }
+  attr(zones,'na') <- is.na(zones)
+  zones[is.na(zones)] <- naId
+  #zonelist <- sort(unique(array(zones)))
+  
+  result <- vector(mode="list", length=length(zone.list))
+  names(result) <- zone.list
+  for(item in zone.list){
+    indices <- which((zones == item), arr.ind = TRUE)
+    indices[,2] <- indices[,2] + (colSpanStart - 1)
+    result[[toString(item)]] <- indices
   }
+  return(result)
+}
+
+.worker5 <- function(x, index = NULL){
+  descx <- paste("x", toString(index), ".desc", sep = "")
+  #descZones <- paste("zones", toString(index), ".desc", sep = "")
+  x <- attach.big.matrix(descx)
+  #zones <- attach.big.matrix(descZones)
+  for (i in 1:length(zonesIndex)) {
+    #zone.set <- (zones[,] == item)
+    #zone.set <- (zones == item)
+    
+    indexes <- zonesIndex[[i]]
+    if(length(indexes) == 0) {next}
+    x[indexes] <- pops[as.numeric(names(zonesIndex[i]))] / nrow(indexes)
+    #x[zone.set] <- pops[item] / sum(zone.set)
+    #return(x)
+  }
+}
+
+.worker7 <- function(x, index = NULL){
+  descx <- paste("iteration", toString(index), ".desc", sep = "")
+  #descZones <- paste("zones", toString(index), ".desc", sep = "")
+  x <- attach.big.matrix(descx)
+  #zones <- attach.big.matrix(descZones)
+  for (i in 1:length(zonesIndex)) {
+    #zone.set <- (zones[,] == item)
+    #zone.set <- (zones == item)
+    indexes <- zonesIndex[[i]]
+    if(length(indexes) == 0) {next}
+    correct <- (pops[as.numeric(names(zonesIndex[i]))] - sum(x[indexes])) / nrow(indexes)
+    x[indexes] <- x[indexes] + correct
+  }
+}
+
+.worker8 <- function(x, index = NULL){
+  descx <- paste("iteration", toString(index), ".desc", sep = "")
+  #descZones <- paste("zones", toString(index), ".desc", sep = "")
+  x <- attach.big.matrix(descx)
+  #zones <- attach.big.matrix(descZones)
+  for (i in 1:length(zonesIndex)) {
+    #zone.set <- (zones[,] == item)
+    #zone.set <- (zones == item)
+    indexes <- zonesIndex[[i]]
+    if(length(indexes) == 0) {next}
+    correct <- pops[as.numeric(names(zonesIndex[i]))] / sum(x[indexes])
+    x[indexes] <- x[indexes] * correct
+  }
+}
 
 # Pycnophylactic interpolation, adapted from the pycno package by Chris Brunsdon.
 # Given a SpatialPolygonsDataFrame and a set of populations for each polygon, compute a population density estimate based on Tobler's pycnophylactic interpolation algorithm. The result is a SpatialGridDataFrame.
 .pycno <- function( x, pops, celldim, r=0.2, converge=3, no_cores, verbose=TRUE ) {
 
-	#no_cores <- detectCores() - 1
-	bbx <- slot(x,'bbox')
-	offset <- bbx[,1]
-	extent <- bbx[,2] - offset
-	globalShape <- ceiling(extent / celldim)
-	intervaly <- floor(globalShape/no_cores)[[2]]
+  bbx <- slot(x,'bbox')
+  offset <- bbx[,1]
+  extent <- bbx[,2] - offset
+  globalShape <- ceiling(extent / celldim)
+  intervaly <- floor(globalShape/no_cores)[[2]]
+  subSections <- rep(intervaly, no_cores)
 
-	subSections <- rep(intervaly, no_cores)
-	#Ajuste para sum(subSections['y']) == globalShape['y']
-	i <- 1
-	while(sum(subSections) < globalShape[[2]]){
-		subSections[i] <- subSections[i] + 1
-		i <- i + 1
-	}
+  i <- 1
+  while(sum(subSections) < globalShape[[2]]){
+    subSections[i] <- subSections[i] + 1
+    i <- i + 1
+  }
+  gridList <- list()
+  for(i in 1:no_cores)  {
+    if (!is(celldim,"SpatialGrid")) {
+      if( i == 1){
+        offset <- bbx[,1]
+      }else{
+        offset[2] <- offset[2] + (celldim * subSections[i-1])
+      }			  
+      gridList[[i]] <- SpatialGrid(GridTopology(offset,c(celldim,celldim),c(globalShape[1], subSections[i])))
+      
+    } else {
+      #TODO:
+      gr <- celldim
+      gridList[[i]] <- gr
+    }
+  }
+  px <- CRS(proj4string(x))
+  
+  clusterExport(cl, "px", envir = environment())
+  poligonDataFrame <- x
+  clusterExport(cl, "poligonDataFrame", envir = environment())
+  colSpanStart <- 1
+  for(i in 1:no_cores){
+    gridElement <- gridList[[no_cores - (i-1)]]
+    colSpanEnd <- subSections[no_cores - (i-1)] + colSpanStart - 1
+    print(colSpanStart)
+    print(colSpanEnd)
+    clusterExport(cl[i], "gridElement", envir = environment())
+    clusterExport(cl[i], "colSpanStart", envir = environment())
+    clusterExport(cl[i], "colSpanEnd", envir = environment())
+    colSpanStart <- colSpanEnd + 1
+  }
+  
+  clusterEvalQ(cl, library(rgdal))
+  clusterEvalQ(cl, library(bigmemory))
+  
+  zone.list <- sapply(slot(coarse, "polygons"), function(x) as.numeric(slot(x, "ID")))
+  zone.list <- tail(zone.list, length(zone.list)-1) #removes first ID zero
+  zone.list <- c(zone.list, max(zone.list) + 1, max(zone.list) + 2)
+  naId <- max(zone.list)
+  
+  clusterExport(cl, "naId", envir = environment())
+  clusterExport(cl, "zone.list", envir = environment())
+  
+  result <- parLapply(cl, 1:no_cores, .worker2)
+  coords <- coordinates(gridList[no_cores])
+  for(i in (no_cores-1):1){
+    coords <- rbind(coords, coordinates(gridList[i]) )
+  }
+  pops <- c(pops,0)
+  j <- 1
+  backx <- paste("x", toString(j), ".bin", sep = "")
+  descx <- paste("x", toString(j), ".desc", sep = "")
+  
+  
+  x <- big.matrix(globalShape[[1]], globalShape[[2]], type = "double",  init = 0, separated = FALSE, backingfile = backx, descriptorfile = descx)
 
-	#vector.workersMemLoad[[paste("c",no_cores,"r",celldim,  sep = "")]][test] <- 0
+  resultsMerged <- result[[1]]
+  for(i in 2:length(result)){
+    resultsMerged <-  mapply(rbind, resultsMerged, result[[i]], SIMPLIFY=FALSE)
+  }
 
-	gridList <- list()
-	for(i in 1:no_cores)  {
-		if (!is(celldim,"SpatialGrid")) {
-			if( i == 1){
-				offset <- bbx[,1]
-			}else{
-				offset[2] <- offset[2] + (celldim * subSections[i-1])
-			}			  
-			gridList[[i]] <- SpatialGrid(GridTopology(offset,c(celldim,celldim),c(globalShape[1],subSections[i])))
+  n <- length(resultsMerged)
+  k <- n/no_cores
+  resultsMerged <- split(resultsMerged, rep(1:ceiling(n/k), each=k)[1:n])
 
-		} else {
-			#TODO:
-			gr <- celldim
-			gridList[[i]] <- gr
-		}
-	}
-
-	px <- CRS(proj4string(x))
-
-	clusterExport(cl, "px", envir = environment())
-	poligonDataFrame <- x
-	clusterExport(cl, "poligonDataFrame", envir = environment())
-
-	for(i in 1:no_cores){
-		gridElement <- gridList[[i]]
-		clusterExport(cl[i], "gridElement", envir = environment())
-	}
-
-	clusterEvalQ(cl, library(rgdal))
-	overlays <- parLapply(cl, 1:no_cores, .worker2)
-	total <- do.call(rbind, overlays)
-
-	coords <- coordinates(gridList[1])
-	for(i in 2:no_cores){
-		coords <- rbind(coords, coordinates(gridList[i]) )
-	}
-
-	gr <- SpatialPixelsDataFrame(coords, total)
-	gr <- as(gr,"SpatialGridDataFrame")
-	gr.dim <- slot(getGridTopology(gr), "cells.dim" )
-
-	zones <- gr[[1]]
-
-	dim(zones) <- gr.dim
-	attr(zones,'na') <- is.na(zones)
-
-	zones[is.na(zones)] <- max(zones,na.rm=T) + 1
-	zone.list <- sort(unique(array(zones)))
-	pops <- c(pops,0)
-	
-	j <- 1
-	backx <- paste("x", toString(j), ".bin", sep = "")
-	descx <- paste("x", toString(j), ".desc", sep = "")
-	x <- as.big.matrix(x = zones * 0, type = "double", separated = FALSE, backingfile = backx, descriptorfile = descx)
-
-	splitsZoneList <- split(zone.list, sort(zone.list%%no_cores))
-	for(i in 1:no_cores){
-	zoneList <- splitsZoneList[[i]]
-		clusterExport(cl[i], "zoneList", envir = environment())
-		clusterExport(cl[i], "zones", envir = environment())
-		clusterExport(cl[i], "pops", envir = environment())
-	}
-
-	clusterEvalQ(cl, library(bigmemory))
-
-	parLapply(cl, 1:no_cores, .worker5, index = j)
-
-	x <- as.matrix(x)
-	stopper <- max(x, na.rm = TRUE) * 10^(-converge)
-
-
-	repeat {
-		old.x <- x
-		mval <- mean(x)
-		s1d <- function(s) unclass(stats::filter(s,c(0.5,0,0.5)))
-		pad <- rbind(mval,cbind(mval,x,mval),mval)
-		pad <- (t(apply(pad,1,s1d)) + apply(pad,2,s1d))/2
-		sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
-		#x <- x*r + (1-r)*sm
-
-		back <- paste("iteration", toString(j), ".bin", sep = "")
-		desc <- paste("iteration", toString(j), ".desc", sep = "")
-
-		x <- as.big.matrix(x = x*r + (1-r)*sm, type = "double", separated = FALSE, backingfile = back, descriptorfile = desc)
-
-		parLapply(cl, 1:no_cores, .worker7, index = j)
-
-		cells <- which(as.matrix(x)<0, arr.ind = TRUE)
-		if(length(cells) > 0){
-			x[cells] <- 0
-		}
-
-		parLapply(cl, 1:no_cores, .worker8, index = j)
-		x <- as.matrix(x)
-
-		j <- j + 1
-		if (verbose) {
-			flush.console()
-			cat(sprintf("Maximum Change: %12.5f - will stop at %12.5f\n", max(abs(old.x - x), na.rm = TRUE), stopper))
-		}
-		if (max(abs(old.x - x), na.rm = TRUE) <= stopper) break
-		print(max(abs(old.x - x), na.rm = TRUE))
-
-	}
-
-	if (!is.null(attr(x,'na'))) x[attr(x,'na')] <- NA
-	result <- SpatialPixelsDataFrame( coordinates(gr), data.frame(dens=array(x)) )
-	result <- as( result , "SpatialGridDataFrame" )
-	proj4string(result) <- px
+  ################################
+  # TODO: Give equal size zoneIndexes subsets no all workers
+  # aux2 <- list()
+  # sizeResultsMerged <- object.size(resultsMerged)
+  # i <- 1
+  # end <- length(resultsMerged)
+  # 
+  # while( object.size(aux2) < sizeResultsMerged/no_cores){
+  #   if(i == end + 1){break()}
+  #   aux2[names(resultsMerged[i])] <- resultsMerged[i]
+  #   i <- i + 1
+  # }
+  #################################
+  
+  for(i in 1:no_cores){
+    zonesIndex <- resultsMerged[[i]]
+    clusterExport(cl[i], "zonesIndex", envir = environment())
+    #clusterExport(cl[i], "zones", envir = environment())
+    clusterExport(cl[i], "pops", envir = environment())
+  }
+  
+  
+  noresult <-parLapply(cl, 1:no_cores, .worker5, index = j)
+  
+  x <- as.matrix(x)
+  stopper <- max(x, na.rm = TRUE) * 10^(-converge)
+  
+  plot(raster(x))
+  
+  repeat {
+    old.x <- x
+    mval <- mean(x)
+    s1d <- function(s) unclass(stats::filter(s,c(0.5,0,0.5)))
+    pad <- rbind(mval,cbind(mval,x,mval),mval)
+    pad <- (t(apply(pad,1,s1d)) + apply(pad,2,s1d))/2
+    sm <- (pad[2:(nrow(x)+1),2:(ncol(x)+1)])
+    #x <- x*r + (1-r)*sm
+    
+    back <- paste("iteration", toString(j), ".bin", sep = "")
+    desc <- paste("iteration", toString(j), ".desc", sep = "")
+    
+    x <- as.big.matrix(x = x*r + (1-r)*sm, type = "double", separated = FALSE, backingfile = back, descriptorfile = desc)
+    
+    parLapply(cl, 1:no_cores, .worker7, index = j)
+    
+    for (i in 1:length(zonesIndex)) {
+      #zone.set <- (zones[,] == item)
+      #zone.set <- (zones == item)
+      indexes <- zonesIndex[[i]]
+      if(length(indexes) == 0) {next}
+      correct <- (pops[as.numeric(names(zonesIndex[i]))] - sum(x[indexes])) / nrow(indexes)
+      x[indexes] <- x[indexes] + correct
+    }
+    
+    cells <- which(as.matrix(x)<0, arr.ind = TRUE)
+    if(length(cells) > 0){
+      x[cells] <- 0
+    }
+    
+    parLapply(cl, 1:no_cores, .worker8, index = j)
+    x <- as.matrix(x)
+    
+    j <- j + 1
+    if (verbose) {
+      flush.console()
+      cat(sprintf("Maximum Change: %12.5f - will stop at %12.5f\n", max(abs(old.x - x), na.rm = TRUE), stopper))
+    }
+    if (max(abs(old.x - x), na.rm = TRUE) <= stopper) break
+    print(max(abs(old.x - x), na.rm = TRUE))
+    
+  }
+  
+  if (!is.null(attr(x,'na'))) x[attr(x,'na')] <- NA
+  #result <- SpatialPixelsDataFrame( coordinates(gr), data.frame(dens=array(x)) )
+  result <- SpatialPixelsDataFrame( coords, data.frame(dens=array(x)) )
+  result <- as( result , "SpatialGridDataFrame" )
+  proj4string(result) <- px
 	#stopCluster(cl)
 	
 	print("END")
