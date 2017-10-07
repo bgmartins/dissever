@@ -24,6 +24,7 @@ Imports:
     raster,
     foreach,
     ff,
+	ffbase,
     boot,
     magrittr,
     viridis,
@@ -33,7 +34,6 @@ Imports:
     bigmemory,
     maptools, 
     rgeos,
-    mxnet
 Suggests:
     knitr,
     rmarkdown,
